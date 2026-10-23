@@ -1,0 +1,1087 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<style>
+:root{color-scheme:light;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+body{margin:0;font:14px system-ui,-apple-system,sans-serif}img{max-width:100%}[hidden]{display:none!important}
+</style>
+<title>Ring Duel</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bodoni+Moda:ital,opsz,wght@0,6..96,400..700;1,6..96,400..700&family=Figtree:wght@400;500;600;700&display=swap">
+<style>
+/* Layout: one centered column; every ring sits on a dark velvet jeweler's pad, the page around it stays pale and quiet. */
+:root {
+  --bg: #eceef4;
+  --surface: #ffffff;
+  --ink: #181c33;
+  --muted: #5b6182;
+  --line: #d5d8e4;
+  --velvet: #252c63;
+  --velvet-2: #0e1234;
+  --accent: #3243b8;
+  --accent-ink: #ffffff;
+  --warn: #c93a35;
+  --display: 'Bodoni Moda', 'Didot', 'Bodoni 72', Georgia, serif;
+  --body: 'Figtree', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0b0e1f; --surface: #151a33; --ink: #eceffa; --muted: #9ba2c4; --line: #272d4f;
+    --velvet: #262e6a; --velvet-2: #080b22; --accent: #8e9cff; --accent-ink: #0b0e1f; --warn: #ff6a61;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0b0e1f; --surface: #151a33; --ink: #eceffa; --muted: #9ba2c4; --line: #272d4f;
+  --velvet: #262e6a; --velvet-2: #080b22; --accent: #8e9cff; --accent-ink: #0b0e1f; --warn: #ff6a61;
+  color-scheme: dark;
+}
+html, body { min-height: 100%; }
+body {
+  background: var(--bg); color: var(--ink); font-family: var(--body); font-size: 16px; line-height: 1.55;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  -webkit-tap-highlight-color: transparent;
+}
+.app { max-width: 820px; margin: 0 auto; padding-block: 20px 48px; display: flex; flex-direction: column; gap: 20px; }
+.top { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; }
+.brand { font-family: var(--display); font-style: italic; font-weight: 500; font-size: 22px; letter-spacing: .01em; }
+.brand b { font-style: normal; font-weight: 700; }
+.top .meta { font-size: 13px; color: var(--muted); letter-spacing: .08em; text-transform: uppercase; font-variant-numeric: tabular-nums; }
+
+h1, h2 { font-family: var(--display); font-weight: 500; line-height: 1.08; text-wrap: balance; margin: 0; }
+h1 { font-size: clamp(38px, 7vw, 60px); letter-spacing: -.01em; }
+h1 em, h2 em { font-style: italic; }
+h2 { font-size: clamp(30px, 5vw, 42px); }
+.eyebrow { font-size: 12px; font-weight: 600; letter-spacing: .14em; text-transform: uppercase; color: var(--muted); margin: 0; }
+p { margin: 0; }
+.lede { color: var(--muted); max-width: 46ch; }
+
+.btn {
+  appearance: none; border: 0; cursor: pointer; font: 600 16px var(--body); border-radius: 999px;
+  padding: 14px 26px; background: var(--accent); color: var(--accent-ink); transition: transform .15s, filter .15s;
+}
+.btn:hover { filter: brightness(1.08); }
+.btn:active { transform: scale(.97); }
+.btn.ghost { background: transparent; color: var(--ink); box-shadow: inset 0 0 0 1.5px var(--line); }
+.btn:focus-visible, .pick:focus-visible { outline: 3px solid var(--accent); outline-offset: 3px; }
+
+/* velvet pad */
+.pad {
+  position: relative; border-radius: 22px; overflow: hidden;
+  background:
+    radial-gradient(120% 95% at 50% 32%, var(--velvet) 0%, var(--velvet-2) 100%);
+  box-shadow: inset 0 0 0 1px rgba(255,255,255,.06), inset 0 -30px 60px rgba(0,0,0,.25), 0 14px 30px -18px rgba(8,10,40,.7);
+}
+.pad::after { /* faint velvet nap */
+  content: ""; position: absolute; inset: 0; pointer-events: none; opacity: .5;
+  background: repeating-linear-gradient(115deg, rgba(255,255,255,.018) 0 2px, transparent 2px 5px);
+}
+.pad canvas { display: block; width: 100%; aspect-ratio: 1; max-width: 100%; }
+
+/* intro */
+.intro { display: grid; grid-template-columns: 1.05fr 1fr; gap: 32px; align-items: center; }
+.intro .copy { display: flex; flex-direction: column; gap: 18px; min-width: 0; }
+.facts { display: flex; flex-wrap: wrap; gap: 10px 26px; margin: 4px 0 6px; padding: 0; list-style: none; }
+.facts li { display: flex; flex-direction: column; }
+.facts b { font-family: var(--display); font-size: 30px; font-weight: 500; line-height: 1; font-variant-numeric: lining-nums; }
+.facts span { font-size: 13px; color: var(--muted); }
+.opt { display: flex; align-items: center; flex-wrap: wrap; gap: 6px; }
+.opt-label { font-size: 12px; font-weight: 600; letter-spacing: .14em; text-transform: uppercase; color: var(--muted); margin-right: 4px; }
+.seg { appearance: none; border: 0; cursor: pointer; font: 600 14px var(--body); padding: 7px 15px; border-radius: 999px; background: transparent; color: var(--ink); box-shadow: inset 0 0 0 1.5px var(--line); font-variant-numeric: tabular-nums; }
+.seg.on { background: var(--ink); color: var(--bg); box-shadow: none; }
+.seg:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
+.opt-note { font-size: 13px; color: var(--muted); margin-left: 6px; }
+.lean-note { font-size: 12.5px; color: var(--muted); margin-top: -8px; }
+.hero figure { margin: 0; display: flex; flex-direction: column; gap: 10px; }
+.hero figcaption { font-size: 13px; color: var(--muted); text-align: center; min-height: 1.5em; }
+#heroCanvas { transition: opacity .35s ease; }
+#heroCanvas.fade { opacity: 0; }
+
+/* play */
+.stage { display: flex; flex-direction: column; gap: 14px; }
+.hud { display: flex; justify-content: space-between; align-items: flex-end; gap: 12px; }
+.hud .round { font-size: 14px; color: var(--muted); font-variant-numeric: tabular-nums; }
+.hud .round b { color: var(--ink); font-weight: 600; }
+.clock { font-family: var(--display); font-size: 40px; line-height: .9; font-variant-numeric: tabular-nums lining-nums; min-width: 2.6ch; text-align: right; }
+.timer { height: 6px; border-radius: 3px; background: var(--line); overflow: hidden; }
+.timer i { display: block; height: 100%; width: 100%; background: var(--accent); transform-origin: left center; }
+.stage.urgent .timer i { background: var(--warn); }
+.stage.urgent .clock { color: var(--warn); }
+.duel-wrap { position: relative; }
+.duel { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.pick { appearance: none; border: 0; padding: 0; margin: 0; cursor: pointer; display: block; width: 100%; transition: transform .18s ease, opacity .28s ease, box-shadow .2s ease; }
+.pick .letter { position: absolute; top: 10px; left: 13px; z-index: 2; font: 600 11px var(--body); letter-spacing: .16em; color: rgba(255,255,255,.5); }
+@media (hover: hover) { .pick:hover { transform: translateY(-3px); } }
+.pick.chosen { transform: scale(1.025); box-shadow: 0 0 0 3px var(--accent), 0 18px 34px -16px rgba(8,10,40,.8); }
+.pick.passed { opacity: .28; transform: scale(.96); }
+.hint { text-align: center; font-size: 14px; color: var(--muted); }
+.hint .keys { display: none; }
+@media (hover: hover) and (pointer: fine) { .hint .keys { display: inline; } }
+kbd { font: 600 12px var(--body); border: 1px solid var(--line); border-bottom-width: 2px; border-radius: 5px; padding: 1px 6px; background: var(--surface); }
+.toast {
+  position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%) scale(.9); z-index: 5; pointer-events: none;
+  background: var(--surface); color: var(--ink); border-radius: 16px; padding: 14px 26px; text-align: center;
+  font-family: var(--display); font-style: italic; font-size: 30px; box-shadow: 0 16px 40px -12px rgba(0,0,0,.5);
+  opacity: 0; transition: opacity .2s, transform .2s;
+}
+.toast small { display: block; font: 500 13px var(--body); font-style: normal; color: var(--muted); margin-top: 2px; }
+.toast.show { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+
+.face-head { display: flex; flex-direction: column; gap: 6px; }
+.bracket { display: flex; gap: 6px; }
+.bracket span { flex: 1; height: 4px; border-radius: 2px; background: var(--line); }
+.bracket span.on { background: var(--accent); }
+
+/* results */
+.result { display: grid; grid-template-columns: 1fr 1fr; gap: 28px; align-items: start; }
+.result .side { display: flex; flex-direction: column; gap: 18px; min-width: 0; }
+.metal-line { font-family: var(--display); font-style: italic; font-size: 20px; color: var(--muted); margin-top: 4px; }
+.ticket {
+  position: relative; background: var(--surface); border: 1px solid var(--line); border-radius: 8px 8px 8px 8px;
+  padding: 16px 18px 16px 34px;
+}
+.ticket::before { /* the string hole on a jeweler's tag */
+  content: ""; position: absolute; left: 12px; top: 50%; width: 9px; height: 9px; margin-top: -5px; border-radius: 50%;
+  background: var(--bg); box-shadow: inset 0 0 0 1.5px var(--line);
+}
+.ticket dl { margin: 0; display: grid; grid-template-columns: auto 1fr; gap: 6px 16px; font-size: 14px; }
+.ticket dt { color: var(--muted); font-size: 12px; letter-spacing: .1em; text-transform: uppercase; padding-top: 2px; }
+.ticket dd { margin: 0; font-weight: 500; }
+.leans { display: flex; flex-direction: column; gap: 12px; }
+.lean { display: grid; grid-template-columns: 1fr auto; gap: 4px 12px; font-size: 14px; }
+.lean .name { color: var(--muted); }
+.lean .verdict { font-weight: 600; text-align: right; }
+.lean .track { grid-column: 1 / -1; height: 6px; border-radius: 3px; background: var(--line); overflow: hidden; }
+.lean .track i { display: block; height: 100%; background: var(--accent); border-radius: 3px; }
+.lean .also { grid-column: 1 / -1; font-size: 12.5px; color: var(--muted); }
+.stats { display: flex; flex-wrap: wrap; gap: 8px 22px; font-size: 13px; color: var(--muted); font-variant-numeric: tabular-nums; }
+.stats b { color: var(--ink); font-weight: 600; }
+.actions { display: flex; flex-wrap: wrap; gap: 10px; }
+.copied { font-size: 13px; color: var(--muted); align-self: center; }
+.section-label { font-size: 12px; font-weight: 600; letter-spacing: .14em; text-transform: uppercase; color: var(--muted); margin: 0 0 -6px; }
+
+@media (max-width: 680px) {
+  .intro, .result { grid-template-columns: 1fr; gap: 22px; }
+  .hero { order: -1; max-width: 340px; width: 100%; margin: 0 auto; }
+  .clock { font-size: 34px; }
+  .duel { gap: 10px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { transition-duration: .01ms !important; animation-duration: .01ms !important; }
+}
+</style>
+</head>
+<body>
+<main class="app">
+  <header class="top">
+    <span class="brand"><b>Ring</b> Duel</span>
+    <span class="meta" id="topMeta">Engagement ring style finder</span>
+  </header>
+
+  <section id="intro" class="intro">
+    <div class="copy">
+      <p class="eyebrow">Two rings at a time. Go with your gut.</p>
+      <h1>Pick fast.<br><em>Find your ring.</em></h1>
+      <p class="lede">You'll see two rings at a time. Tap the one you'd rather wear, and beat the clock if the timer is on. Each pick teaches the game a little more about your taste, and the pairs get closer to your style as you go. At the end, you choose a winner from your top four with no clock.</p>
+      <ul class="facts">
+        <li><b id="factRounds">30</b><span>quick rounds</span></li>
+        <li><b id="factTimer">10s</b><span id="factTimerLabel">per pick</span></li>
+        <li><b>4</b><span>finalists, untimed</span></li>
+      </ul>
+      <div class="opt" role="group" aria-label="Number of picks">
+        <span class="opt-label">Picks</span>
+        <button type="button" class="seg" data-n="20" aria-pressed="false">20</button>
+        <button type="button" class="seg on" data-n="30" aria-pressed="true">30</button>
+        <button type="button" class="seg" data-n="40" aria-pressed="false">40</button>
+        <span class="opt-note" id="optNote">about 3 min · more picks, more accurate</span>
+      </div>
+      <div class="opt" role="group" aria-label="Time per pick">
+        <span class="opt-label">Timer</span>
+        <button type="button" class="seg" data-t="5" aria-pressed="false">5s</button>
+        <button type="button" class="seg on" data-t="10" aria-pressed="true">10s</button>
+        <button type="button" class="seg" data-t="15" aria-pressed="false">15s</button>
+        <button type="button" class="seg" data-t="0" aria-pressed="false">Off</button>
+      </div>
+      <div><button class="btn" id="startBtn" type="button">Start round 1</button></div>
+    </div>
+    <div class="hero">
+      <figure>
+        <div class="pad"><canvas id="heroCanvas" width="600" height="600" aria-label="A sample ring"></canvas></div>
+        <figcaption id="heroCap">&nbsp;</figcaption>
+      </figure>
+    </div>
+  </section>
+
+  <section id="play" class="stage" hidden>
+    <div class="hud">
+      <span class="round" id="roundLabel">Round <b>1</b> of 30</span>
+      <span class="clock" id="clock" aria-live="off">10.0</span>
+    </div>
+    <div class="timer" aria-hidden="true"><i id="timerFill"></i></div>
+    <div class="duel-wrap">
+      <div class="duel" id="playDuel">
+        <button class="pick pad" type="button" data-i="0" aria-label="Choose ring A"><span class="letter">A</span><canvas></canvas></button>
+        <button class="pick pad" type="button" data-i="1" aria-label="Choose ring B"><span class="letter">B</span><canvas></canvas></button>
+      </div>
+      <div class="toast" id="toast" role="status">Too slow!<small>Here's a new pair.</small></div>
+    </div>
+    <p class="hint">Tap the one you'd rather wear<span class="keys"> · or press <kbd>←</kbd> <kbd>→</kbd></span></p>
+  </section>
+
+  <section id="face" class="stage" hidden>
+    <div class="face-head">
+      <p class="eyebrow" id="faceStage">Final four · Semifinal 1 of 2</p>
+      <h2>No clock now. <em>Take your time.</em></h2>
+    </div>
+    <div class="bracket" aria-hidden="true"><span></span><span></span><span></span></div>
+    <div class="duel" id="faceDuel">
+      <button class="pick pad" type="button" data-i="0" aria-label="Choose ring A"><span class="letter">A</span><canvas></canvas></button>
+      <button class="pick pad" type="button" data-i="1" aria-label="Choose ring B"><span class="letter">B</span><canvas></canvas></button>
+    </div>
+    <p class="hint">These four are built from everything you picked. Choose your favorite of each pair.</p>
+  </section>
+
+  <section id="result" class="result" hidden>
+    <div class="pad"><canvas id="resultCanvas" aria-label="Your winning ring"></canvas></div>
+    <div class="side">
+      <div>
+        <p class="eyebrow">Your ring</p>
+        <h2 id="resTitle">Oval halo</h2>
+        <p class="metal-line" id="resMetal">in 18k yellow gold</p>
+      </div>
+      <div class="ticket"><dl id="resSpec"></dl></div>
+      <p class="section-label">How strongly you leaned</p>
+      <p class="lean-note">The percent is how sure the game is that this is your favorite option for that trait.</p>
+      <div class="leans" id="resLeans"></div>
+      <div class="stats" id="resStats"></div>
+      <div class="actions">
+        <button class="btn" id="copyBtn" type="button">Copy description</button>
+        <button class="btn ghost" id="againBtn" type="button">Play again</button>
+        <span class="copied" id="copied" aria-live="polite"></span>
+      </div>
+    </div>
+  </section>
+</main>
+
+<script>
+/* ============================================================
+   RING DRAWING
+   ============================================================ */
+const L = 300, Z = 1.45;
+let K = 1; // device pixels per logical unit, for shadow blur
+const TAU = Math.PI * 2;
+
+const METALS = {
+  yellow: { hi: '#fbe6a2', mid: '#d6a945', lo: '#8a6116', edge: '#5a3f0b' },
+  white:  { hi: '#ffffff', mid: '#c6cbd5', lo: '#7b8392', edge: '#4c5361' },
+  rose:   { hi: '#fbd5c4', mid: '#d6977f', lo: '#985845', edge: '#66382a' },
+};
+const SHAPES = {
+  round: { hw: 36, hh: 36 }, oval: { hw: 28, hh: 41 }, emerald: { hw: 27, hh: 40 },
+  cushion: { hw: 34, hh: 34 }, pear: { hw: 29, hh: 42 }, marquise: { hw: 22, hh: 45 }, princess: { hw: 31, hh: 31 },
+};
+const BAND_W = { thin: 12, pave: 17, twisted: 20, chunky: 30 };
+const bandY = x => 150 + 8 * ((x - 150) / 150) ** 2;
+
+function polyPath(ctx, pts) {
+  ctx.beginPath();
+  pts.forEach((p, i) => i ? ctx.lineTo(p[0], p[1]) : ctx.moveTo(p[0], p[1]));
+  ctx.closePath();
+}
+const move = (pts, cx, cy) => pts.map(p => [p[0] + cx, p[1] + cy]);
+
+function emeraldVerts(hw, hh) {
+  const c = Math.min(hw, hh) * 0.32;
+  return [[-hw + c, -hh], [hw - c, -hh], [hw, -hh + c], [hw, hh - c], [hw - c, hh], [-hw + c, hh], [-hw, hh - c], [-hw, -hh + c]];
+}
+
+// Outline points, clockwise on screen.
+function outline(shape, hw, hh) {
+  const pts = [], N = 144;
+  if (shape === 'round' || shape === 'oval') {
+    for (let i = 0; i < N; i++) { const t = i / N * TAU; pts.push([hw * Math.cos(t), hh * Math.sin(t)]); }
+  } else if (shape === 'cushion' || shape === 'princess') {
+    const e = shape === 'cushion' ? 2 / 3.4 : 2 / 10;
+    for (let i = 0; i < N; i++) {
+      const t = i / N * TAU, c = Math.cos(t), s = Math.sin(t);
+      pts.push([hw * Math.sign(c) * Math.abs(c) ** e, hh * Math.sign(s) * Math.abs(s) ** e]);
+    }
+  } else if (shape === 'emerald') {
+    const v = emeraldVerts(hw, hh);
+    for (let i = 0; i < 8; i++) {
+      const a = v[i], b = v[(i + 1) % 8];
+      for (let j = 0; j < 18; j++) { const f = j / 18; pts.push([a[0] + (b[0] - a[0]) * f, a[1] + (b[1] - a[1]) * f]); }
+    }
+  } else if (shape === 'marquise') {
+    const k = hw / hh, R = (1 + k * k) / (2 * k), d = Math.sqrt(R * R - 1), M = 72;
+    for (let i = 0; i < M; i++) { const y = -1 + 2 * i / M; pts.push([(Math.sqrt(R * R - y * y) - d) * hh, y * hh]); }
+    for (let i = 0; i < M; i++) { const y = 1 - 2 * i / M; pts.push([-(Math.sqrt(R * R - y * y) - d) * hh, y * hh]); }
+  } else if (shape === 'pear') {
+    const ht = 1.2 * hh, hb = 0.8 * hh, jy = -hh + ht, M = 48;
+    for (let i = 0; i < M; i++) { const u = 1 - i / M; pts.push([hw * Math.cos(u * Math.PI / 2), jy - u * ht]); }
+    for (let i = 0; i < M; i++) { const a = i / M * Math.PI; pts.push([hw * Math.cos(a), jy + hb * Math.sin(a)]); }
+    for (let i = 0; i < M; i++) { const u = i / M; pts.push([-hw * Math.cos(u * Math.PI / 2), jy - u * ht]); }
+  }
+  return pts;
+}
+
+function normalAt(pts, i) {
+  const n = pts.length, a = pts[(i - 1 + n) % n], b = pts[(i + 1) % n];
+  let tx = b[0] - a[0], ty = b[1] - a[1];
+  const len = Math.hypot(tx, ty) || 1;
+  return [ty / len, -tx / len];
+}
+function offsetPts(pts, d) {
+  return pts.map((p, i) => { const nn = normalAt(pts, i); return [p[0] + nn[0] * d, p[1] + nn[1] * d]; });
+}
+function resample(pts, spacing) {
+  const n = pts.length, seg = [];
+  let total = 0;
+  for (let i = 0; i < n; i++) { const a = pts[i], b = pts[(i + 1) % n]; const l = Math.hypot(b[0] - a[0], b[1] - a[1]); seg.push(l); total += l; }
+  const count = Math.max(3, Math.round(total / spacing)), step = total / count, out = [];
+  let i = 0, acc = 0;
+  for (let c = 0; c < count; c++) {
+    const target = c * step;
+    while (i < n - 1 && acc + seg[i] < target) { acc += seg[i]; i++; }
+    const a = pts[i], b = pts[(i + 1) % n], f = seg[i] ? (target - acc) / seg[i] : 0;
+    out.push([a[0] + (b[0] - a[0]) * f, a[1] + (b[1] - a[1]) * f]);
+  }
+  return out;
+}
+
+function metalGrad(ctx, y0, y1, m, wide) {
+  const g = ctx.createLinearGradient(0, y0, 0, y1);
+  g.addColorStop(0, m.lo); g.addColorStop(wide ? .12 : .18, m.mid); g.addColorStop(wide ? .3 : .38, m.hi);
+  if (wide) { g.addColorStop(.46, m.mid); g.addColorStop(.72, m.lo); g.addColorStop(.86, m.mid); }
+  else g.addColorStop(.62, m.mid);
+  g.addColorStop(1, m.lo);
+  return g;
+}
+function headMetal(ctx, cx, cy, R, m) {
+  const g = ctx.createLinearGradient(cx - R, cy - R, cx + R, cy + R);
+  g.addColorStop(0, m.hi); g.addColorStop(.35, m.mid); g.addColorStop(.55, m.hi); g.addColorStop(.8, m.lo); g.addColorStop(1, m.mid);
+  return g;
+}
+
+function sparkle(ctx, x, y, s) {
+  ctx.save();
+  const g = ctx.createRadialGradient(x, y, 0, x, y, s * 1.4);
+  g.addColorStop(0, 'rgba(255,255,255,.9)'); g.addColorStop(1, 'rgba(255,255,255,0)');
+  ctx.fillStyle = g; ctx.beginPath(); ctx.arc(x, y, s * 1.4, 0, TAU); ctx.fill();
+  ctx.fillStyle = 'rgba(255,255,255,.95)';
+  ctx.beginPath();
+  ctx.moveTo(x, y - s); ctx.lineTo(x + s * .14, y); ctx.lineTo(x, y + s); ctx.lineTo(x - s * .14, y); ctx.closePath();
+  ctx.moveTo(x - s, y); ctx.lineTo(x, y + s * .14); ctx.lineTo(x + s, y); ctx.lineTo(x, y - s * .14); ctx.closePath();
+  ctx.fill();
+  ctx.restore();
+}
+
+function gem(ctx, x, y, r, m) {
+  if (m) { ctx.beginPath(); ctx.arc(x, y, r + .9, 0, TAU); ctx.fillStyle = m.lo; ctx.fill(); }
+  const g = ctx.createRadialGradient(x - r * .35, y - r * .35, r * .05, x, y, r);
+  g.addColorStop(0, '#ffffff'); g.addColorStop(.55, '#dde7f0'); g.addColorStop(1, '#8c9fb5');
+  ctx.beginPath(); ctx.arc(x, y, r, 0, TAU); ctx.fillStyle = g; ctx.fill();
+  if (r > 2.6) {
+    ctx.beginPath();
+    for (let i = 0; i < 8; i++) {
+      const a = i * Math.PI / 4 + .39, px = x + Math.cos(a) * r * .48, py = y + Math.sin(a) * r * .48;
+      i ? ctx.lineTo(px, py) : ctx.moveTo(px, py);
+    }
+    ctx.closePath(); ctx.strokeStyle = 'rgba(100,125,150,.5)'; ctx.lineWidth = .4; ctx.stroke();
+    for (let i = 0; i < 8; i++) {
+      const a = i * Math.PI / 4 + .39;
+      ctx.beginPath(); ctx.moveTo(x + Math.cos(a) * r * .48, y + Math.sin(a) * r * .48); ctx.lineTo(x + Math.cos(a) * r, y + Math.sin(a) * r); ctx.stroke();
+    }
+  }
+  ctx.beginPath(); ctx.arc(x, y, r, 0, TAU); ctx.strokeStyle = 'rgba(50,70,95,.55)'; ctx.lineWidth = .4; ctx.stroke();
+}
+
+function beads(ctx, pts, spacing, r, m) {
+  resample(pts, spacing).forEach(p => {
+    ctx.beginPath(); ctx.arc(p[0], p[1], r, 0, TAU); ctx.fillStyle = m.hi; ctx.fill();
+    ctx.strokeStyle = m.edge; ctx.lineWidth = .3; ctx.stroke();
+  });
+}
+
+function brilliantFacets(ctx, pts, cx, cy) {
+  const n = pts.length, M = 8;
+  const at = f => pts[((Math.round(f * n / M)) % n + n) % n];
+  const lerp = (p, t) => [cx + (p[0] - cx) * t, cy + (p[1] - cy) * t];
+  const P = [], H = [], T = [], St = [];
+  for (let i = 0; i < M; i++) { P.push(at(i)); H.push(at(i + .5)); }
+  for (let i = 0; i < M; i++) { T.push(lerp(P[i], .5)); St.push(lerp(H[i], .76)); }
+  const fill = (poly, a, light) => {
+    polyPath(ctx, poly);
+    ctx.fillStyle = light ? `rgba(255,255,255,${a})` : `rgba(70,95,125,${a})`;
+    ctx.fill(); ctx.strokeStyle = 'rgba(90,115,145,.35)'; ctx.lineWidth = .5; ctx.stroke();
+  };
+  fill(T, .28, true);
+  for (let i = 0; i < M; i++) {
+    const j = (i + 1) % M, h = (i + M - 1) % M, w = .5 + .5 * Math.sin(i * 2.4 + 1);
+    fill([T[i], T[j], St[i]], .12 + .3 * w, i % 2 === 0);
+    fill([T[i], St[h], P[i], St[i]], .1 + .25 * (1 - w), i % 2 === 1);
+    fill([St[i], P[i], H[i]], .08 + .2 * w, true);
+    fill([St[i], H[i], P[j]], .08 + .2 * (1 - w), false);
+  }
+}
+function stepFacets(ctx, V, cx, cy) {
+  const rings = [1, .78, .58, .4].map(t => V.map(p => [cx + (p[0] - cx) * t, cy + (p[1] - cy) * t]));
+  const shade = [.35, .12, .05, .18, .4, .18, .05, .12];
+  ctx.strokeStyle = 'rgba(90,115,145,.4)'; ctx.lineWidth = .5;
+  for (let r = 0; r < 3; r++) for (let i = 0; i < 8; i++) {
+    const j = (i + 1) % 8;
+    polyPath(ctx, [rings[r][i], rings[r][j], rings[r + 1][j], rings[r + 1][i]]);
+    const light = (i + r) % 2 === 0;
+    ctx.fillStyle = light ? `rgba(255,255,255,${.15 + shade[i]})` : `rgba(70,95,125,${.1 + shade[(i + 4) % 8] * .6})`;
+    ctx.fill(); ctx.stroke();
+  }
+  polyPath(ctx, rings[3]); ctx.fillStyle = 'rgba(255,255,255,.3)'; ctx.fill(); ctx.stroke();
+}
+
+function drawStone(ctx, shape, cx, cy, sc) {
+  const D = SHAPES[shape], hw = D.hw * sc, hh = D.hh * sc;
+  const pts = move(outline(shape, hw, hh), cx, cy);
+  ctx.save();
+  ctx.shadowColor = 'rgba(0,0,0,.45)'; ctx.shadowBlur = 5 * K; ctx.shadowOffsetY = 1.5 * K;
+  polyPath(ctx, pts); ctx.fillStyle = '#d9e3ec'; ctx.fill();
+  ctx.restore();
+  const g = ctx.createLinearGradient(cx - hw, cy - hh, cx + hw, cy + hh);
+  g.addColorStop(0, '#ffffff'); g.addColorStop(.3, '#d3dfea'); g.addColorStop(.5, '#f8fbff'); g.addColorStop(.75, '#adbccc'); g.addColorStop(1, '#e8eef5');
+  polyPath(ctx, pts); ctx.fillStyle = g; ctx.fill();
+  ctx.save(); polyPath(ctx, pts); ctx.clip();
+  if (shape === 'emerald') stepFacets(ctx, move(emeraldVerts(hw, hh), cx, cy), cx, cy);
+  else brilliantFacets(ctx, pts, cx, cy);
+  ctx.restore();
+  polyPath(ctx, pts); ctx.strokeStyle = 'rgba(60,80,105,.6)'; ctx.lineWidth = .7; ctx.stroke();
+  sparkle(ctx, cx - hw * .32, cy - hh * .36, Math.min(hw, hh) * .24);
+  return pts;
+}
+
+function prong(ctx, x, y, r, m) {
+  const g = ctx.createRadialGradient(x - r * .35, y - r * .4, r * .1, x, y, r);
+  g.addColorStop(0, m.hi); g.addColorStop(.6, m.mid); g.addColorStop(1, m.lo);
+  ctx.save(); ctx.shadowColor = 'rgba(0,0,0,.35)'; ctx.shadowBlur = 2 * K;
+  ctx.beginPath(); ctx.arc(x, y, r, 0, TAU); ctx.fillStyle = g; ctx.fill(); ctx.restore();
+  ctx.beginPath(); ctx.arc(x, y, r, 0, TAU); ctx.strokeStyle = m.edge; ctx.lineWidth = .4; ctx.stroke();
+}
+function vprong(ctx, p, n, m, s) {
+  const t = [-n[1], n[0]];
+  const o = [p[0] + n[0] * 2.6 * s, p[1] + n[1] * 2.6 * s];
+  const a = [p[0] - n[0] * 6 * s + t[0] * 4.4 * s, p[1] - n[1] * 6 * s + t[1] * 4.4 * s];
+  const b = [p[0] - n[0] * 6 * s - t[0] * 4.4 * s, p[1] - n[1] * 6 * s - t[1] * 4.4 * s];
+  const notch = [p[0] - n[0] * 2 * s, p[1] - n[1] * 2 * s];
+  const g = ctx.createLinearGradient(a[0], a[1], b[0], b[1]);
+  g.addColorStop(0, m.lo); g.addColorStop(.45, m.hi); g.addColorStop(1, m.mid);
+  ctx.save(); ctx.shadowColor = 'rgba(0,0,0,.35)'; ctx.shadowBlur = 2 * K;
+  polyPath(ctx, [o, a, notch, b]); ctx.fillStyle = g; ctx.fill(); ctx.restore();
+  polyPath(ctx, [o, a, notch, b]); ctx.strokeStyle = m.edge; ctx.lineWidth = .4; ctx.stroke();
+}
+const TIPS = { pear: [270], marquise: [90, 270] };
+function prongAngles(shape, mode) {
+  if (mode === 'p6') return ({ marquise: [270, 90, 30, 150, 210, 330], pear: [270, 345, 195, 40, 140, 90] })[shape] || [30, 90, 150, 210, 270, 330];
+  return ({ marquise: [270, 90, 0, 180], pear: [270, 25, 155, 90] })[shape] || [45, 135, 225, 315];
+}
+function nearestIdx(pts, cx, cy, hw, hh, deg) {
+  const target = deg * Math.PI / 180;
+  let bi = 0, bd = 99;
+  pts.forEach((p, i) => {
+    const a = Math.atan2((p[1] - cy) / hh, (p[0] - cx) / hw);
+    const d = Math.abs((((a - target) % TAU) + TAU * 1.5) % TAU - Math.PI);
+    if (d < bd) { bd = d; bi = i; }
+  });
+  return bi;
+}
+function drawProngs(ctx, shape, pts, cx, cy, hw, hh, mode, m, s) {
+  const tips = TIPS[shape] || [];
+  const base = mode === 'milgrain' ? 3.1 : mode === 'p6' ? 3.5 : 4.2;
+  prongAngles(shape, mode).forEach(deg => {
+    const i = nearestIdx(pts, cx, cy, hw, hh, deg), p = pts[i], nn = normalAt(pts, i);
+    if (tips.includes(deg)) { vprong(ctx, p, nn, m, s); return; }
+    if (mode === 'claw') {
+      [-9, 9].forEach(dd => {
+        const j = nearestIdx(pts, cx, cy, hw, hh, deg + dd), q = pts[j], n2 = normalAt(pts, j);
+        prong(ctx, q[0] + n2[0] * .6 * s, q[1] + n2[1] * .6 * s, 2.5 * s, m);
+      });
+    } else prong(ctx, p[0] + nn[0] * base * .25 * s, p[1] + nn[1] * base * .25 * s, base * s, m);
+  });
+}
+
+function bandPath(ctx, w) {
+  ctx.beginPath();
+  for (let x = -20; x <= 320; x += 5) ctx.lineTo(x, bandY(x) - w / 2);
+  for (let x = 320; x >= -20; x -= 5) ctx.lineTo(x, bandY(x) + w / 2);
+  ctx.closePath();
+}
+function drawTwist(ctx, w, m) {
+  const A = w * .2, sw = w * .56, P = 30;
+  const strand = sg => { const pts = []; for (let x = -20; x <= 320; x += 2) pts.push([x, bandY(x) + sg * A * Math.sin(TAU * (x - 150) / P)]); return pts; };
+  const a = strand(1), b = strand(-1);
+  const draw = pts => {
+    const line = () => { ctx.beginPath(); pts.forEach((p, i) => i ? ctx.lineTo(p[0], p[1]) : ctx.moveTo(p[0], p[1])); };
+    ctx.lineCap = 'butt'; ctx.lineJoin = 'round';
+    line(); ctx.strokeStyle = m.edge; ctx.lineWidth = sw + 1.2; ctx.stroke();
+    line(); ctx.strokeStyle = m.mid; ctx.lineWidth = sw; ctx.stroke();
+    ctx.save(); ctx.translate(0, -sw * .2); line(); ctx.strokeStyle = m.hi; ctx.globalAlpha = .8; ctx.lineWidth = sw * .28; ctx.stroke(); ctx.restore();
+  };
+  draw(b); draw(a);
+  for (let k = -14; k <= 14; k += 2) {
+    const xc = 150 + k * P / 2;
+    ctx.save(); ctx.beginPath(); ctx.rect(xc - P / 4, 0, P / 2, 300); ctx.clip(); draw(b); ctx.restore();
+  }
+}
+function drawBand(ctx, r, m, ext) {
+  const w = BAND_W[r.band];
+  ctx.save(); ctx.shadowColor = 'rgba(0,0,0,.4)'; ctx.shadowBlur = 8 * K; ctx.shadowOffsetY = 4 * K;
+  bandPath(ctx, w); ctx.fillStyle = m.lo; ctx.fill(); ctx.restore();
+  if (r.band === 'twisted') { drawTwist(ctx, w, m); return; }
+  const g = metalGrad(ctx, -w / 2, w / 2, m, r.band === 'chunky');
+  ctx.save(); bandPath(ctx, w); ctx.clip();
+  for (let x = -20; x < 320; x += 3) {
+    ctx.save(); ctx.translate(x, bandY(x + 1.5)); ctx.fillStyle = g; ctx.fillRect(0, -w / 2, 3.5, w); ctx.restore();
+  }
+  ctx.restore();
+  ctx.strokeStyle = m.edge; ctx.lineWidth = .7;
+  [-1, 1].forEach(sg => { ctx.beginPath(); for (let x = -20; x <= 320; x += 5) ctx.lineTo(x, bandY(x) + sg * w / 2); ctx.stroke(); });
+  if (r.band === 'pave') {
+    const sp = w * .64, gr = w * .27;
+    const start = ext + (r.accent === 'side' ? BAG_LEN + 4 : 0) + sp * .7;
+    for (let x = 150 + start; x < 330; x += sp) { gem(ctx, x, bandY(x), gr, m); gem(ctx, 300 - x, bandY(300 - x), gr, m); }
+  }
+  if (r.details === 'milgrain') {
+    [-1, 1].forEach(sg => {
+      for (let x = -20; x <= 320; x += 3.2) {
+        ctx.beginPath(); ctx.arc(x, bandY(x) + sg * (w / 2 - 1.5), .85, 0, TAU);
+        ctx.fillStyle = m.hi; ctx.fill(); ctx.strokeStyle = m.edge; ctx.lineWidth = .3; ctx.stroke();
+      }
+    });
+  }
+}
+
+// Tapered baguettes: step-cut side stones in a metal channel, wide end against the center stone.
+const BAG_LEN = 21;
+function drawSideAccents(ctx, ext, m) {
+  [1, -1].forEach(sg => {
+    const xi = 150 + sg * (ext + 1.5), xo = xi + sg * BAG_LEN, w0 = 10.5, w1 = 6.5, p = 1.7;
+    const ch = [[xi, bandY(xi) - w0 / 2 - p], [xo + sg * p, bandY(xo) - w1 / 2 - p], [xo + sg * p, bandY(xo) + w1 / 2 + p], [xi, bandY(xi) + w0 / 2 + p]];
+    ctx.save(); ctx.shadowColor = 'rgba(0,0,0,.4)'; ctx.shadowBlur = 3 * K;
+    polyPath(ctx, ch); ctx.fillStyle = headMetal(ctx, (xi + xo) / 2, 150, 14, m); ctx.fill(); ctx.restore();
+    polyPath(ctx, ch); ctx.strokeStyle = m.edge; ctx.lineWidth = .5; ctx.stroke();
+    const q = [[xi, bandY(xi) - w0 / 2], [xo, bandY(xo) - w1 / 2], [xo, bandY(xo) + w1 / 2], [xi, bandY(xi) + w0 / 2]];
+    const cxq = (xi + xo) / 2, cyq = bandY(cxq);
+    const g = ctx.createLinearGradient(xi, cyq - w0 / 2, xo, cyq + w0 / 2);
+    g.addColorStop(0, '#ffffff'); g.addColorStop(.5, '#cfdbe7'); g.addColorStop(1, '#f2f6fa');
+    polyPath(ctx, q); ctx.fillStyle = g; ctx.fill();
+    const inner = q.map(pt => [cxq + (pt[0] - cxq) * .6, cyq + (pt[1] - cyq) * .45]);
+    const shades = ['rgba(255,255,255,.55)', 'rgba(70,95,125,.25)', 'rgba(70,95,125,.4)', 'rgba(255,255,255,.3)'];
+    for (let i = 0; i < 4; i++) {
+      const j = (i + 1) % 4;
+      polyPath(ctx, [q[i], q[j], inner[j], inner[i]]); ctx.fillStyle = shades[i]; ctx.fill();
+      ctx.strokeStyle = 'rgba(90,115,145,.45)'; ctx.lineWidth = .4; ctx.stroke();
+    }
+    polyPath(ctx, inner); ctx.fillStyle = 'rgba(255,255,255,.35)'; ctx.fill(); ctx.stroke();
+    polyPath(ctx, q); ctx.strokeStyle = 'rgba(60,80,105,.6)'; ctx.lineWidth = .5; ctx.stroke();
+  });
+}
+
+function solidHead(ctx, pathPts, cx, cy, R, m) {
+  ctx.save(); ctx.shadowColor = 'rgba(0,0,0,.5)'; ctx.shadowBlur = 8 * K; ctx.shadowOffsetY = 3 * K;
+  polyPath(ctx, pathPts); ctx.fillStyle = headMetal(ctx, cx, cy, R, m); ctx.fill(); ctx.restore();
+  polyPath(ctx, pathPts); ctx.strokeStyle = m.edge; ctx.lineWidth = .6; ctx.stroke();
+}
+
+function drawRing(ctx, r) {
+  const m = METALS[r.metal], D = SHAPES[r.shape], cx = 150, cy = 150, mg = r.details === 'milgrain';
+  const sc = ({ halo: .86, three: .8, cluster: .55, bezel: .92 })[r.setting] || 1;
+  const hw = D.hw * sc, hh = D.hh * sc, petal = 7.6;
+  let ext, side = null;
+  if (r.setting === 'halo') ext = hw + 11;
+  else if (r.setting === 'bezel') ext = hw + 6;
+  else if (r.setting === 'cluster') ext = hw + 2 * petal + 3;
+  else if (r.setting === 'three') { const rs = 14, sx = hw + 5 + rs; side = { rs, sx }; ext = sx + rs + 3; }
+  else ext = hw + 4;
+
+  drawBand(ctx, r, m, ext);
+  if (r.accent === 'side') drawSideAccents(ctx, ext, m);
+
+  const pts = move(outline(r.shape, hw, hh), cx, cy);
+  if (r.setting === 'halo') {
+    solidHead(ctx, offsetPts(pts, 10.5), cx, cy, hh + 12, m);
+    resample(offsetPts(pts, 5.6), 6.2).forEach(p => gem(ctx, p[0], p[1], 2.75, m));
+    if (mg) beads(ctx, offsetPts(pts, 10.7), 2.6, .75, m);
+  } else if (r.setting === 'cluster') {
+    const ring = resample(offsetPts(pts, petal + 1.2), 2 * petal + 1.3);
+    solidHead(ctx, offsetPts(pts, 2 * petal + 2.6), cx, cy, hh + 2 * petal, m);
+    ring.forEach(p => gem(ctx, p[0], p[1], petal, m));
+    ring.forEach((p, i) => { const q = ring[(i + 1) % ring.length]; prong(ctx, (p[0] + q[0]) / 2, (p[1] + q[1]) / 2, 1.7, m); });
+    if (mg) beads(ctx, offsetPts(pts, 2 * petal + 2.8), 2.6, .75, m);
+  } else if (r.setting === 'bezel') {
+    solidHead(ctx, offsetPts(pts, 5.5), cx, cy, hh + 6, m);
+    if (mg) beads(ctx, offsetPts(pts, 5.7), 2.4, .7, m);
+  }
+  if (side) {
+    [-1, 1].forEach(sg => {
+      const sxp = cx + sg * side.sx, s = side.rs / 36;
+      const spts = drawStone(ctx, 'round', sxp, cy, s);
+      drawProngs(ctx, 'round', spts, sxp, cy, side.rs, side.rs, r.details, m, .7);
+    });
+  }
+  if (r.accent === 'hidden') {
+    ctx.save(); ctx.globalAlpha = .9;
+    resample(offsetPts(pts, 1.7), 3.6).forEach(p => gem(ctx, p[0], p[1], 1.65, null));
+    ctx.restore();
+  }
+  drawStone(ctx, r.shape, cx, cy, sc);
+  if (r.setting === 'bezel') {
+    polyPath(ctx, pts); ctx.strokeStyle = m.edge; ctx.lineWidth = 1; ctx.stroke();
+  } else {
+    if (mg && (r.setting === 'solitaire' || r.setting === 'three')) beads(ctx, offsetPts(pts, 1.4), 2.3, .75, m);
+    drawProngs(ctx, r.shape, pts, cx, cy, hw, hh, r.details, m, r.setting === 'cluster' ? .65 : 1);
+  }
+}
+
+function paintRaw(ctx, px, ring) {
+  const base = px / L;
+  K = base * Z;
+  ctx.setTransform(1, 0, 0, 1, 0, 0);
+  ctx.clearRect(0, 0, px, px);
+  ctx.setTransform(base, 0, 0, base, 0, 0);
+  ctx.translate(150, 150); ctx.scale(Z, Z); ctx.translate(-150, -150);
+  drawRing(ctx, ring);
+}
+// Compare two rings as drawn at phone size; true if enough pixels differ to tell them apart.
+const PROBE = 120;
+const probes = [0, 1].map(() => { const c = document.createElement('canvas'); c.width = c.height = PROBE; return c.getContext('2d', { willReadFrequently: true }); });
+function looksDifferent(a, b) {
+  if (lookKey(a) === lookKey(b)) return false;
+  try {
+    paintRaw(probes[0], PROBE, a); paintRaw(probes[1], PROBE, b);
+    const A = probes[0].getImageData(0, 0, PROBE, PROBE).data, B = probes[1].getImageData(0, 0, PROBE, PROBE).data;
+    let n = 0;
+    for (let i = 0; i < A.length; i += 4) {
+      if (Math.abs(A[i] - B[i]) + Math.abs(A[i + 1] - B[i + 1]) + Math.abs(A[i + 2] - B[i + 2]) + Math.abs(A[i + 3] - B[i + 3]) > 60) n++;
+    }
+    return n / (PROBE * PROBE) > .008;
+  } catch (e) { return true; }
+}
+function renderRing(canvas, ring) {
+  canvas._ring = ring;
+  const dpr = Math.min(window.devicePixelRatio || 1, 2.5);
+  const w = canvas.clientWidth || 300;
+  const px = Math.round(w * dpr);
+  if (canvas.width !== px) { canvas.width = px; canvas.height = px; }
+  const ctx = canvas.getContext('2d'), base = px / L;
+  K = base * Z;
+  ctx.setTransform(1, 0, 0, 1, 0, 0);
+  ctx.clearRect(0, 0, px, px);
+  ctx.setTransform(base, 0, 0, base, 0, 0);
+  ctx.translate(150, 150); ctx.scale(Z, Z); ctx.translate(-150, -150);
+  drawRing(ctx, ring);
+  ctx.setTransform(base, 0, 0, base, 0, 0);
+  ctx.globalCompositeOperation = 'destination-in';
+  const f = ctx.createLinearGradient(0, 0, L, 0);
+  f.addColorStop(0, 'rgba(0,0,0,0)'); f.addColorStop(.2, 'rgba(0,0,0,1)'); f.addColorStop(.8, 'rgba(0,0,0,1)'); f.addColorStop(1, 'rgba(0,0,0,0)');
+  ctx.fillStyle = f; ctx.fillRect(0, 0, L, L);
+  ctx.globalCompositeOperation = 'source-over';
+}
+
+/* ============================================================
+   STYLE MODEL
+   ============================================================ */
+const TRAITS = [
+  { key: 'shape', name: 'Stone shape', values: [['round', 'Round brilliant'], ['oval', 'Oval'], ['emerald', 'Emerald cut'], ['cushion', 'Cushion'], ['pear', 'Pear'], ['marquise', 'Marquise'], ['princess', 'Princess']] },
+  { key: 'setting', name: 'Setting', values: [['solitaire', 'Solitaire'], ['halo', 'Halo'], ['three', 'Three-stone'], ['bezel', 'Bezel'], ['cluster', 'Cluster']] },
+  { key: 'metal', name: 'Metal', values: [['yellow', '18k yellow gold'], ['white', 'Platinum'], ['rose', '18k rose gold']] },
+  { key: 'band', name: 'Band', values: [['thin', 'Thin plain band'], ['pave', 'Pavé band'], ['twisted', 'Twisted band'], ['chunky', 'Wide plain band']] },
+  { key: 'accent', name: 'Accents', values: [['none', 'No extra stones'], ['side', 'Tapered baguette side stones'], ['hidden', 'Hidden halo']] },
+  { key: 'details', name: 'Prongs & details', values: [['p4', 'Four prongs'], ['p6', 'Six prongs'], ['claw', 'Double claw prongs'], ['milgrain', 'Milgrain vintage edging']] },
+];
+const KEYS = TRAITS.map(t => t.key);
+const VALS = Object.fromEntries(TRAITS.map(t => [t.key, t.values.map(v => v[0])]));
+const LABEL = {};
+TRAITS.forEach(t => { LABEL[t.key] = {}; t.values.forEach(([v, l]) => LABEL[t.key][v] = l); });
+const SHORT_SHAPE = { round: 'Round', oval: 'Oval', emerald: 'Emerald-cut', cushion: 'Cushion', pear: 'Pear', marquise: 'Marquise', princess: 'Princess' };
+const SHORT_SETTING = { solitaire: 'solitaire', halo: 'halo', three: 'three-stone', bezel: 'bezel', cluster: 'cluster' };
+const BAND_SPEC = { thin: 'Thin plain band, about 1.8 mm', pave: 'Pavé band, about 2 mm', twisted: 'Twisted band, about 2.2 mm', chunky: 'Wide plain band, about 3.5 mm' };
+
+const rnd = a => a[Math.floor(Math.random() * a.length)];
+function shuffle(a) { a = a.slice(); for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; }
+function randomRing() { const r = {}; KEYS.forEach(k => r[k] = rnd(VALS[k])); return normalize(r); }
+function normalize(r) {
+  r = { ...r };
+  if (['halo', 'cluster', 'bezel'].includes(r.setting) && r.accent === 'hidden') r.accent = 'none';
+  return r;
+}
+// Prongs can't be seen on a bezel, and are too small to judge on a cluster; milgrain edging still shows on both.
+const visible = (r, k) => !(k === 'details' && (r.setting === 'bezel' || r.setting === 'cluster') && r.details !== 'milgrain');
+const lookKey = r => KEYS.map(k => visible(r, k) ? r[k] : '-').join('|');
+
+/* ---- Choice model: one appeal weight per option, Bayesian logistic (Bradley-Terry) with a Gaussian posterior ---- */
+const IDX = {}; let DIM = 0;
+KEYS.forEach(k => { IDX[k] = {}; VALS[k].forEach(v => IDX[k][v] = DIM++); });
+const PRIOR_VAR = 1.5;
+let OBS = [], MU = null, SIG = null;
+const sigm = z => 1 / (1 + Math.exp(-z));
+function feat(r) { const x = new Float64Array(DIM); KEYS.forEach(k => { if (visible(r, k)) x[IDX[k][r[k]]] = 1; }); return x; }
+function diffVec(a, b) { const x = feat(a), y = feat(b); for (let i = 0; i < DIM; i++) x[i] -= y[i]; return x; }
+function dot(a, b) { let s = 0; for (let i = 0; i < a.length; i++) s += a[i] * b[i]; return s; }
+function quad(M, d) {
+  let s = 0;
+  for (let i = 0; i < DIM; i++) { if (!d[i]) continue; let r = 0; const Mi = M[i]; for (let j = 0; j < DIM; j++) if (d[j]) r += Mi[j] * d[j]; s += d[i] * r; }
+  return s;
+}
+function eye(v) { return Array.from({ length: DIM }, (_, i) => { const r = new Float64Array(DIM); r[i] = v; return r; }); }
+function invert(A) {
+  const n = A.length, M = A.map(r => Float64Array.from(r)), I = eye(1);
+  for (let c = 0; c < n; c++) {
+    let p = c;
+    for (let r = c + 1; r < n; r++) if (Math.abs(M[r][c]) > Math.abs(M[p][c])) p = r;
+    [M[c], M[p]] = [M[p], M[c]]; [I[c], I[p]] = [I[p], I[c]];
+    const piv = M[c][c];
+    for (let j = 0; j < n; j++) { M[c][j] /= piv; I[c][j] /= piv; }
+    for (let r = 0; r < n; r++) {
+      if (r === c) continue;
+      const f = M[r][c]; if (!f) continue;
+      for (let j = 0; j < n; j++) { M[r][j] -= f * M[c][j]; I[r][j] -= f * I[c][j]; }
+    }
+  }
+  return I;
+}
+function gradHess(mu) {
+  const g = new Float64Array(DIM), H = eye(1 / PRIOR_VAR);
+  for (let i = 0; i < DIM; i++) g[i] = -mu[i] / PRIOR_VAR;
+  OBS.forEach(({ d, wt }) => {
+    const p = sigm(dot(mu, d));
+    for (let i = 0; i < DIM; i++) {
+      if (!d[i]) continue;
+      g[i] += wt * (1 - p) * d[i];
+      for (let j = 0; j < DIM; j++) if (d[j]) H[i][j] += wt * p * (1 - p) * d[i] * d[j];
+    }
+  });
+  return { g, H };
+}
+function resetModel() { OBS = []; MU = new Float64Array(DIM); SIG = eye(PRIOR_VAR); }
+function fitModel() {
+  const mu = Float64Array.from(MU);
+  for (let it = 0; it < 25; it++) {
+    const { g, H } = gradHess(mu), Hi = invert(H);
+    let mx = 0;
+    for (let i = 0; i < DIM; i++) { let s = 0; for (let j = 0; j < DIM; j++) s += Hi[i][j] * g[j]; mu[i] += s; mx = Math.max(mx, Math.abs(s)); }
+    if (mx < 1e-6) break;
+  }
+  MU = mu; SIG = invert(gradHess(mu).H);
+}
+function record(w, l, wt = 1) {
+  const d = diffVec(w, l);
+  if (!d.some(v => v)) return;
+  OBS.push({ d, wt });
+  fitModel();
+}
+function chol(A) {
+  const n = DIM, L = Array.from({ length: n }, () => new Float64Array(n));
+  for (let i = 0; i < n; i++) for (let j = 0; j <= i; j++) {
+    let s = (A[i][j] + A[j][i]) / 2;
+    for (let k = 0; k < j; k++) s -= L[i][k] * L[j][k];
+    if (i === j) L[i][i] = Math.sqrt(Math.max(s, 1e-12)); else L[i][j] = s / L[j][j];
+  }
+  return L;
+}
+function gauss() { let u = 0, v = 0; while (!u) u = Math.random(); while (!v) v = Math.random(); return Math.sqrt(-2 * Math.log(u)) * Math.cos(TAU * v); }
+function sampleW(L) {
+  const z = Array.from({ length: DIM }, gauss), w = Float64Array.from(MU);
+  for (let i = 0; i < DIM; i++) for (let j = 0; j <= i; j++) w[i] += L[i][j] * z[j];
+  return w;
+}
+function topLevel(w, k) { let b = null, bs = -Infinity; shuffle(VALS[k]).forEach(v => { if (w[IDX[k][v]] > bs) { bs = w[IDX[k][v]]; b = v; } }); return b; }
+function bestRingFor(w) { const r = {}; KEYS.forEach(k => r[k] = topLevel(w, k)); return normalize(r); }
+function bestRing() { return bestRingFor(MU); }
+// Expected information from showing a pair: high when the model is unsure about the options that differ AND expects a near coin-flip.
+function infoGain(d) {
+  const s2 = quad(SIG, d), m = dot(MU, d), p = sigm(m / Math.sqrt(1 + Math.PI * s2 / 8));
+  return Math.log(1 + p * (1 - p) * s2);
+}
+// Chance each option is her favorite within its trait, from posterior samples.
+function traitConfidence(n = 600) {
+  const L = chol(SIG), cnt = {};
+  KEYS.forEach(k => { cnt[k] = {}; VALS[k].forEach(v => cnt[k][v] = 0); });
+  for (let s = 0; s < n; s++) { const w = sampleW(L); KEYS.forEach(k => { cnt[k][topLevel(w, k)] += 1 / n; }); }
+  return cnt;
+}
+
+/* ============================================================
+   GAME
+   ============================================================ */
+let ROUNDS = 30;
+let LIMIT = 10000; // 0 = no timer
+const st = { phase: 'intro', round: 0, pair: null, t0: 0, raf: 0, locked: true, times: [], timeouts: 0, lastTrait: null, cyc: {}, bracket: null, timer: 0 };
+const $ = id => document.getElementById(id);
+const playBtns = [...document.querySelectorAll('#playDuel .pick')];
+const faceBtns = [...document.querySelectorAll('#faceDuel .pick')];
+
+const lastPairs = [];
+const pairKey = (a, b) => [lookKey(a), lookKey(b)].sort().join('#');
+// Two phases.
+// 1) Mapping (first 40% of picks): textbook Bayesian efficient design. Generate 300 candidate pairs that differ in
+//    1-3 traits, and show the one with the highest expected information about her whole taste.
+// 2) Homing in (the rest): her current favorite vs. that ring with one trait swapped, again choosing the swap
+//    expected to teach the most. This is best at confirming which option in each trait she likes most.
+const MAP_SHARE = 0.4;
+function mappingPairs(n) {
+  const L = chol(SIG), out = [];
+  for (let i = 0; i < n; i++) {
+    const base = Math.random() < .5 ? bestRingFor(sampleW(L)) : randomRing();
+    const u = Math.random(), nChange = u < .15 ? 1 : u < .65 ? 2 : 3;
+    const alt = { ...base };
+    shuffle(KEYS).slice(0, nChange).forEach(k => alt[k] = rnd(VALS[k].filter(v => v !== base[k])));
+    const A = normalize(base), B = normalize(alt), d = diffVec(A, B);
+    if (!d.some(v => v)) continue;
+    out.push({ A, B, score: infoGain(d) + Math.random() * 1e-4 });
+  }
+  return out.sort((x, y) => y.score - x.score).slice(0, 30);
+}
+function homingPairs() {
+  const base = bestRing(), out = [];
+  KEYS.forEach(k => VALS[k].forEach(v => {
+    if (v === base[k]) return;
+    const B = normalize({ ...base, [k]: v }), d = diffVec(base, B);
+    if (!d.some(x => x)) return;
+    out.push({ A: base, B, score: infoGain(d) + Math.random() * 1e-4 });
+  }));
+  return out.sort((x, y) => y.score - x.score);
+}
+function candidatePairs() {
+  return st.round < Math.round(ROUNDS * MAP_SHARE) ? mappingPairs(300) : homingPairs();
+}
+function nextPair() {
+  for (const c of candidatePairs()) {
+    const key = pairKey(c.A, c.B);
+    if (lastPairs.includes(key) || !looksDifferent(c.A, c.B)) continue;
+    lastPairs.push(key); if (lastPairs.length > 8) lastPairs.shift();
+    return Math.random() < .5 ? [c.A, c.B] : [c.B, c.A];
+  }
+  const a = randomRing(); let b = randomRing(), g = 0;
+  while (!looksDifferent(a, b) && g++ < 20) b = randomRing();
+  return [a, b];
+}
+
+function show(id) {
+  ['intro', 'play', 'face', 'result'].forEach(s => $(s).hidden = s !== id);
+  st.phase = id;
+  if (id !== 'intro') stopHero();
+}
+function drawPair(btns, pair) {
+  btns.forEach((b, i) => { b.classList.remove('chosen', 'passed'); renderRing(b.querySelector('canvas'), pair[i]); });
+}
+function animatePick(btns, i) {
+  btns[i].classList.add('chosen'); btns[1 - i].classList.add('passed');
+}
+
+function startGame() {
+  resetModel();
+  Object.assign(st, { round: 0, times: [], timeouts: 0, bracket: null });
+  lastPairs.length = 0;
+  show('play');
+  $('topMeta').textContent = 'Timed rounds';
+  nextRound();
+}
+function nextRound() {
+  if (st.round >= ROUNDS) { startFaceoff(); return; }
+  st.pair = nextPair();
+  drawPair(playBtns, st.pair);
+  $('roundLabel').innerHTML = `Round <b>${st.round + 1}</b> of ${ROUNDS}`;
+  $('play').classList.remove('urgent');
+  st.locked = false;
+  st.t0 = performance.now();
+  cancelAnimationFrame(st.raf);
+  $('clock').hidden = !LIMIT;
+  document.querySelector('#play .timer').hidden = !LIMIT;
+  if (LIMIT) tick();
+}
+function tick() {
+  const left = Math.max(0, LIMIT - (performance.now() - st.t0));
+  $('timerFill').style.transform = `scaleX(${left / LIMIT})`;
+  $('clock').textContent = (left / 1000).toFixed(1);
+  $('play').classList.toggle('urgent', left < 3000);
+  if (left <= 0) { timeout(); return; }
+  st.raf = requestAnimationFrame(tick);
+}
+function timeout() {
+  st.locked = true; st.timeouts++;
+  playBtns.forEach(b => b.classList.add('passed'));
+  $('toast').classList.add('show');
+  st.timer = setTimeout(() => { $('toast').classList.remove('show'); nextRound(); }, 950);
+}
+function choosePlay(i) {
+  if (st.locked) return;
+  st.locked = true;
+  cancelAnimationFrame(st.raf);
+  st.times.push(performance.now() - st.t0);
+  record(st.pair[i], st.pair[1 - i], 1);
+  animatePick(playBtns, i);
+  st.round++;
+  st.timer = setTimeout(nextRound, 430);
+}
+
+function startFaceoff() {
+  const list = [bestRing()];
+  const fresh = r => list.every(x => looksDifferent(r, x));
+  const L = chol(SIG);
+  for (let t = 0; t < 80 && list.length < 4; t++) { const r = bestRingFor(sampleW(L)); if (fresh(r)) list.push(r); }
+  let guard = 0;
+  while (list.length < 4 && guard++ < 200) {
+    const k = rnd(KEYS), alt = normalize({ ...list[0], [k]: rnd(VALS[k]) });
+    if (fresh(alt)) list.push(alt);
+  }
+  const appeal = r => dot(MU, feat(r));
+  list.sort((a, b) => appeal(b) - appeal(a));
+  st.bracket = { matches: [[list[0], list[3]], [list[1], list[2]]], winners: [], stage: 0 };
+  show('face');
+  $('topMeta').textContent = 'Final four';
+  faceRound();
+}
+function faceRound() {
+  const b = st.bracket;
+  let pair = b.stage < 2 ? b.matches[b.stage] : [b.winners[0], b.winners[1]];
+  if (Math.random() < .5) pair = [pair[1], pair[0]];
+  st.pair = pair;
+  $('faceStage').textContent = b.stage === 0 ? 'Final four · Semifinal 1 of 2' : b.stage === 1 ? 'Final four · Semifinal 2 of 2' : 'The final';
+  document.querySelectorAll('.bracket span').forEach((s, i) => s.classList.toggle('on', i <= b.stage));
+  drawPair(faceBtns, pair);
+  st.locked = false;
+}
+function chooseFace(i) {
+  if (st.locked) return;
+  st.locked = true;
+  const w = st.pair[i], l = st.pair[1 - i], b = st.bracket;
+  record(w, l, 1.5);
+  animatePick(faceBtns, i);
+  if (b.stage < 2) { b.winners.push(w); b.stage++; st.timer = setTimeout(faceRound, 450); }
+  else st.timer = setTimeout(() => finish(w), 550);
+}
+
+function ringTitle(r) {
+  const vintage = r.details === 'milgrain';
+  const shape = vintage ? SHORT_SHAPE[r.shape].toLowerCase() : SHORT_SHAPE[r.shape];
+  return `${vintage ? 'Vintage ' : ''}${shape} ${SHORT_SETTING[r.setting]}`;
+}
+function specRows(r) {
+  return [
+    ['Center stone', LABEL.shape[r.shape]],
+    ['Setting', LABEL.setting[r.setting]],
+    ['Metal', LABEL.metal[r.metal]],
+    ['Band', BAND_SPEC[r.band]],
+    ['Accents', LABEL.accent[r.accent]],
+    ['Details', visible(r, 'details') ? LABEL.details[r.details] : r.setting === 'bezel' ? 'Smooth metal rim, no prongs' : 'Small prongs between the cluster stones'],
+  ];
+}
+function finish(r) {
+  st.final = r;
+  show('result');
+  $('topMeta').textContent = 'Your result';
+  renderRing($('resultCanvas'), r);
+  $('resTitle').textContent = ringTitle(r);
+  $('resMetal').textContent = 'in ' + LABEL.metal[r.metal].replace('Platinum', 'platinum');
+  $('resSpec').innerHTML = specRows(r).map(([a, b]) => `<dt>${a}</dt><dd>${b}</dd>`).join('');
+  const conf = traitConfidence();
+  $('resLeans').innerHTML = TRAITS.map(t => {
+    const k = t.key, v = r[k], c = conf[k][v];
+    const hidden = k === 'details' && !visible(r, k);
+    const verdict = hidden ? 'Not shown on this setting' : (c > .6 ? 'Strong pull' : c > .35 ? 'Clear lean' : 'Open to options') + ` · ${Math.round(c * 100)}%`;
+    const also = VALS[k].filter(x => x !== v && conf[k][x] >= .15).sort((a, b) => conf[k][b] - conf[k][a]).slice(0, 2).map(x => LABEL[k][x]);
+    const valueLabel = k === 'details' && !visible(r, k) ? (r.setting === 'bezel' ? 'Bezel rim' : 'Cluster prongs') : LABEL[k][v];
+    return `<div class="lean"><span class="name">${t.name}: <b style="color:var(--ink);font-weight:600">${valueLabel}</b></span><span class="verdict">${verdict}</span>
+      <span class="track"><i style="width:${hidden ? 0 : Math.round(Math.max(.04, c) * 100)}%"></i></span>
+      ${also.length && !hidden ? `<span class="also">Also in the running: ${also.join(', ')}</span>` : ''}</div>`;
+  }).join('');
+  const t = st.times, avg = t.length ? t.reduce((a, b) => a + b, 0) / t.length / 1000 : 0;
+  const fast = t.length ? Math.min(...t) / 1000 : 0;
+  $('resStats').innerHTML = `<span>Average pick <b>${avg.toFixed(1)}s</b></span><span>Fastest pick <b>${fast.toFixed(1)}s</b></span><span>Too slow <b>${st.timeouts}</b>×</span>`;
+  $('copied').textContent = '';
+}
+function descriptionText(r) {
+  return `Ring style: ${ringTitle(r)} in ${LABEL.metal[r.metal]}\n` + specRows(r).map(([a, b]) => `${a}: ${b}`).join('\n');
+}
+
+/* ---------- hero preview on the intro ---------- */
+let heroTimer = 0;
+const heroExamples = [
+  { shape: 'oval', setting: 'halo', metal: 'yellow', band: 'pave', accent: 'none', details: 'p4' },
+  { shape: 'emerald', setting: 'three', metal: 'white', band: 'thin', accent: 'none', details: 'p4' },
+  { shape: 'pear', setting: 'solitaire', metal: 'rose', band: 'twisted', accent: 'hidden', details: 'claw' },
+  { shape: 'cushion', setting: 'bezel', metal: 'yellow', band: 'chunky', accent: 'side', details: 'milgrain' },
+  { shape: 'marquise', setting: 'cluster', metal: 'white', band: 'thin', accent: 'none', details: 'p6' },
+  { shape: 'round', setting: 'solitaire', metal: 'white', band: 'pave', accent: 'hidden', details: 'p6' },
+  { shape: 'princess', setting: 'halo', metal: 'rose', band: 'thin', accent: 'side', details: 'milgrain' },
+];
+let heroIdx = 0;
+function heroShow(r) {
+  renderRing($('heroCanvas'), r);
+  $('heroCap').textContent = `Example: ${ringTitle(r)} in ${LABEL.metal[r.metal].replace('Platinum', 'platinum')}`;
+}
+function startHero() {
+  heroShow(heroExamples[0]);
+  if (matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+  clearInterval(heroTimer);
+  heroTimer = setInterval(() => {
+    const c = $('heroCanvas');
+    c.classList.add('fade');
+    setTimeout(() => { heroIdx = (heroIdx + 1) % heroExamples.length; heroShow(heroExamples[heroIdx]); c.classList.remove('fade'); }, 350);
+  }, 2200);
+}
+function stopHero() { clearInterval(heroTimer); }
+
+/* ---------- wiring ---------- */
+$('startBtn').addEventListener('click', startGame);
+$('againBtn').addEventListener('click', () => { show('intro'); $('topMeta').textContent = 'Engagement ring style finder'; startHero(); });
+function setRounds(n) {
+  ROUNDS = n;
+  document.querySelectorAll('.seg[data-n]').forEach(b => { const on = +b.dataset.n === n; b.classList.toggle('on', on); b.setAttribute('aria-pressed', String(on)); });
+  $('factRounds').textContent = n;
+  updateEstimate();
+  try { localStorage.setItem('ringduel.rounds', String(n)); } catch (e) {}
+}
+document.querySelectorAll('.seg[data-n]').forEach(b => b.addEventListener('click', () => setRounds(+b.dataset.n)));
+function updateEstimate() {
+  const perPick = LIMIT ? Math.min(LIMIT / 1000 * .45, 5) + .6 : 5.5;
+  $('optNote').textContent = `about ${Math.max(1, Math.round(ROUNDS * perPick / 60 + 1))} min · more picks, more accurate`;
+}
+function setTimer(t) {
+  LIMIT = t * 1000;
+  document.querySelectorAll('.seg[data-t]').forEach(b => { const on = +b.dataset.t === t; b.classList.toggle('on', on); b.setAttribute('aria-pressed', String(on)); });
+  $('factTimer').textContent = t ? t + 's' : 'Off';
+  $('factTimerLabel').textContent = t ? 'per pick' : 'no clock';
+  updateEstimate();
+  try { localStorage.setItem('ringduel.timer', String(t)); } catch (e) {}
+}
+document.querySelectorAll('.seg[data-t]').forEach(b => b.addEventListener('click', () => setTimer(+b.dataset.t)));
+(() => { let t = 10; try { const raw = localStorage.getItem('ringduel.timer'); if (raw !== null && [0, 5, 10, 15].includes(+raw)) t = +raw; } catch (e) {} setTimer(t); })();
+(() => { let n = 30; try { const v = +localStorage.getItem('ringduel.rounds'); if ([20, 30, 40].includes(v)) n = v; } catch (e) {} setRounds(n); })();
+playBtns.forEach(b => b.addEventListener('click', () => choosePlay(+b.dataset.i)));
+faceBtns.forEach(b => b.addEventListener('click', () => chooseFace(+b.dataset.i)));
+$('copyBtn').addEventListener('click', () => {
+  const text = descriptionText(st.final);
+  const done = () => { $('copied').textContent = 'Copied'; };
+  try {
+    navigator.clipboard.writeText(text).then(done, () => { $('copied').textContent = text.split('\n')[0]; });
+  } catch (e) { $('copied').textContent = text.split('\n')[0]; }
+});
+document.addEventListener('keydown', e => {
+  const k = e.key;
+  const pick = (k === 'ArrowLeft' || k === '1') ? 0 : (k === 'ArrowRight' || k === '2') ? 1 : -1;
+  if (pick < 0) return;
+  if (st.phase === 'play') { e.preventDefault(); choosePlay(pick); }
+  else if (st.phase === 'face') { e.preventDefault(); chooseFace(pick); }
+});
+let rz = 0;
+window.addEventListener('resize', () => {
+  clearTimeout(rz);
+  rz = setTimeout(() => document.querySelectorAll('canvas').forEach(c => { if (c._ring && c.offsetParent) renderRing(c, c._ring); }), 120);
+});
+
+startHero();
+</script>
+</body>
+</html>
