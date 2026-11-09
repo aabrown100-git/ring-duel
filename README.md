@@ -4,6 +4,8 @@ A this-or-that game for finding an engagement ring style. You see two drawn ring
 
 ## How to play
 
+Play online: [Ring Duel](https://aabrown100-git.github.io/ring-duel/).
+
 Open `index.html` in any browser. There's nothing to install or build.
 
 On the start screen you can set:
