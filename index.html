@@ -246,7 +246,15 @@ kbd { font: 600 12px var(--body); border: 1px solid var(--line); border-bottom-w
   </section>
 
   <section id="result" class="result" hidden>
-    <div class="pad"><canvas id="resultCanvas" aria-label="Your winning ring"></canvas></div>
+    <div>
+      <div class="pad"><canvas id="studioCanvas" hidden tabindex="0" style="touch-action:none" aria-label="Interactive 3D ring. Drag to rotate, scroll or pinch to zoom. Arrow keys rotate; plus and minus zoom."></canvas><canvas id="resultCanvas" aria-label="Your winning ring illustration"></canvas></div>
+      <p class="lean-note" style="margin-top:16px" id="studioStatus" role="status">Preparing your studio render…</p>
+      <div class="actions">
+        <button class="btn ghost" id="viewBtn" type="button" hidden>Show illustration</button>
+        <button class="btn ghost" id="resetViewBtn" type="button" hidden>Reset view</button>
+        <button class="btn" id="downloadModelBtn" type="button" hidden>Download 3D model</button>
+      </div>
+    </div>
     <div class="side">
       <div>
         <p class="eyebrow">Your ring</p>
@@ -259,14 +267,17 @@ kbd { font: 600 12px var(--body); border: 1px solid var(--line); border-bottom-w
       <div class="leans" id="resLeans"></div>
       <div class="stats" id="resStats"></div>
       <div class="actions">
+        <button class="btn" id="blenderBriefBtn" type="button">Export Blender brief</button>
         <button class="btn" id="copyBtn" type="button">Copy description</button>
         <button class="btn ghost" id="againBtn" type="button">Play again</button>
         <span class="copied" id="copied" aria-live="polite"></span>
       </div>
+      <p class="lean-note">Export your winning design and Blender starter code, then attach the file to a new Codex chat.</p>
     </div>
   </section>
 </main>
 
+<script type="application/json" id="blenderStarterSource">"import bpy, math, os, json\nfrom mathutils import Vector\nfrom math import sin, cos, pi\nOUT=os.path.dirname(os.path.abspath(__file__))\nbpy.ops.object.select_all(action='SELECT'); bpy.ops.object.delete(use_global=False)\nfor c in list(bpy.data.collections):\n if c.name != 'Collection': bpy.data.collections.remove(c)\nbase=bpy.data.collections.get('Collection'); base.name='PROTOTYPE | Oval halo ring'\ndef collection(n):\n c=bpy.data.collections.new(n); bpy.context.scene.collection.children.link(c); return c\nmetal=collection('01 | Shank and open basket'); gems=collection('02 | Individually faceted diamonds'); settings=collection('03 | Stone seats and prongs'); studio=collection('04 | Studio')\ndef move(o,c):\n for old in list(o.users_collection):old.objects.unlink(o)\n c.objects.link(o)\ndef mat(n,color,metallic=0,rough=.2):\n m=bpy.data.materials.new(n); m.diffuse_color=(*color,1); m.use_nodes=True; p=m.node_tree.nodes.get('Principled BSDF');p.inputs['Base Color'].default_value=(*color,1);p.inputs['Metallic'].default_value=metallic;p.inputs['Roughness'].default_value=rough;return m\nG=mat('18k yellow gold | visual alloy',(.83,.53,.19),1,.18)\nD=mat('Diamond | IOR 2.417',(.98,.99,1),0,.035);p=D.node_tree.nodes.get('Principled BSDF');p.inputs['Transmission Weight'].default_value=1;p.inputs['IOR'].default_value=2.417\nfloor=mat('Charcoal studio',(.032,.042,.055),0,.28)\ndef mesh(n,v,f,m,c):\n me=bpy.data.meshes.new(n);me.from_pydata(v,[],f);me.update();o=bpy.data.objects.new(n,me);c.objects.link(o);o.data.materials.append(m);return o\ndef tube(n,pts,r,c=metal,closed=False):\n cu=bpy.data.curves.new(n,'CURVE');cu.dimensions='3D';cu.resolution_u=16;cu.bevel_depth=r;cu.bevel_resolution=4;s=cu.splines.new('POLY');s.points.add(len(pts)-1)\n for p,co in zip(s.points,pts):p.co=(*co,1)\n s.use_cyclic_u=closed;o=bpy.data.objects.new(n,cu);c.objects.link(o);o.data.materials.append(G);return o\ndef ball(n,p,r):\n bpy.ops.mesh.primitive_uv_sphere_add(segments=16,ring_count=8,radius=r,location=p);o=bpy.context.object;o.name=n;move(o,settings);o.data.materials.append(G)\n for f in o.data.polygons:f.use_smooth=True\n return o\ndef ellipse(n,rx,ry,z,r):return tube(n,[(rx*cos(t*2*pi/128),ry*sin(t*2*pi/128),z) for t in range(128)],r,closed=True)\ndef diamond(n,rx,ry,depth,loc,normal=(0,0,1)):\n N=32;v=[]\n # table, crown break, upper/lower girdle, pavilion break, culet\n for scale,z,offset in [(.56,.32,0),(.82,.17,pi/N),(1,0,0),(1,-.035,0),(.48,-.42,pi/N),(.015,-.68,0)]:\n  for i in range(N):\n   a=2*pi*i/N+offset;v.append((rx*scale*cos(a),ry*scale*sin(a),depth*z))\n f=[tuple(range(N))]\n for k in range(5):\n  for i in range(N):\n   a=k*N+i;b=k*N+(i+1)%N;c=(k+1)*N+(i+1)%N;d=(k+1)*N+i\n   if k in (0,1,3):f.extend([(a,d,b),(b,d,c)])\n   else:f.append((a,d,c,b))\n f.append(tuple(reversed(range(5*N,6*N))))\n o=mesh(n,v,f,D,gems);o.location=loc;o.rotation_mode='QUATERNION';o.rotation_quaternion=Vector(normal).to_track_quat('Z','Y');return o\n# Millimetre model, ring ID 17.3 mm; rounded rectangular 2 x 1.6 mm shank.\nv=[];f=[];R=9.45\nfor i in range(256):\n t=2*pi*i/256\n for j in range(24):\n  a=2*pi*j/24;rad=.8*math.copysign(abs(cos(a))**.5,cos(a));y=1*math.copysign(abs(sin(a))**.5,sin(a));v.append(((R+rad)*sin(t),y,(R+rad)*cos(t)))\nfor i in range(256):\n for j in range(24):f.append((i*24+j,((i+1)%256)*24+j,((i+1)%256)*24+(j+1)%24,i*24+(j+1)%24))\no=mesh('Comfort shank | 17.3 mm ID, 2 mm width',v,f,G,metal)\nfor p in o.data.polygons:p.use_smooth=True\n# Main oval, 6 x 8.4 mm, girdle at 12.4 mm.\ndiamond('Center | oval brilliant 6.0 x 8.4 mm',3,4.2,4.4,(0,0,12.4))\nellipse('Upper basket gallery',2.9,4.05,11.85,.19)\nellipse('Lower open basket gallery',1.65,2.5,9.9,.22)\nfor i in range(4):\n a=pi/4+i*pi/2;x=cos(a);y=sin(a)\n tube('Basket strut and center prong %02d'%i,[(1.65*x,2.5*y,9.9),(2.65*x,3.8*y,11.4),(3.07*x,4.29*y,12.4),(2.94*x,4.12*y,12.9)],.19,settings)\n ball('Center prong tip %02d'%i,(2.94*x,4.12*y,12.9),.22)\n# Halo: continuous gallery with individual open seats, 24 diamonds.\nellipse('Halo structural gallery',3.88,5.08,11.7,.26)\nfor i in range(24):\n a=2*pi*i/24;x=3.88*cos(a);y=5.08*sin(a)\n diamond('Halo diamond %02d'%(i+1),.52,.52,.9,(x,y,12.25))\n tube('Halo open seat %02d'%i,[(x+.43*cos(t*2*pi/32),y+.43*sin(t*2*pi/32),11.96) for t in range(32)],.10,settings,True)\n for s in (-1,1):\n  px=x+s*.49*cos(a);py=y+s*.49*sin(a)\n  tube('Halo bead support',[(px,py,11.7),(px,py,12.3)],.085,settings);ball('Halo retaining bead',(px,py,12.32),.12)\n# Curved shoulder bridges tie basket to shank.\nfor side in (-1,1):\n for y in (-.68,.68):tube('Shoulder bridge',[(side*4.8,y,8.15),(side*3.7,y,9.4),(side*2.4,y,10.3),(side*1.6,y,10.0)],.28)\n# Pav\u00e9 shoulders: individual stones and four bead supports per stone.\nfor side in (-1,1):\n for i in range(9):\n  t=side*math.radians(29+i*7.6);n=Vector((sin(t),0,cos(t)));tangent=Vector((cos(t),0,-sin(t)));center=n*10.23\n  diamond('Pave %s %02d'%('L' if side\u003c0 else 'R',i+1),.54,.54,.85,center,n)\n  for u in (-1,1):\n   for w in (-1,1):\n    p=center+tangent*(u*.43)+Vector((0,w*.51,0));tube('Pave bead stem',[p-n*.3,p+n*.1],.075,settings);ball('Pave retaining bead',p+n*.11,.115)\n# Stage\nbpy.ops.mesh.primitive_plane_add(size=200,location=(0,0,-10.28));o=bpy.context.object;o.name='Studio ground';move(o,studio);o.data.materials.append(floor)\ndef aim(o,p):o.rotation_euler=(Vector(p)-o.location).to_track_quat('-Z','Y').to_euler()\nbpy.ops.object.camera_add(location=(28,-37,27));cam=bpy.context.object;move(cam,studio);aim(cam,(0,0,2));cam.data.type='ORTHO';cam.data.ortho_scale=32;bpy.context.scene.camera=cam\nfor name,loc,power,size,color in [('Key softbox',(8,-15,28),4500,15,(1,.91,.79)),('Cool fill',(-18,-8,12),3500,12,(.8,.9,1)),('Rim',(8,16,22),5500,10,(1,1,1)),('Front strip',(2,-23,2),1600,7,(1,1,1))]:\n bpy.ops.object.light_add(type='AREA',location=loc);o=bpy.context.object;o.name=name;move(o,studio);o.data.energy=power;o.data.shape='DISK';o.data.size=size;o.data.color=color;aim(o,(0,0,3))\ns=bpy.context.scene;s.unit_settings.system='METRIC';s.unit_settings.scale_length=.001;s.unit_settings.length_unit='MILLIMETERS';s.render.engine='CYCLES';s.cycles.samples=96;s.cycles.use_denoising=True;s.cycles.max_bounces=16;s.cycles.transmission_bounces=12;s.render.resolution_x=1400;s.render.resolution_y=1400;s.render.resolution_percentage=100;s.world.color=(.22,.22,.22);s.view_settings.view_transform='AgX'\ns['Design status']='Illustrative prototype; not the confirmed Ring Duel winner. Visual concept, not manufacturing CAD.'\ns['Dimensions']='Inner diameter 17.3 mm; shank 2.0 x 1.6 mm; center 6.0 x 8.4 mm; halo 24 x 1.04 mm; pave 18 x 1.08 mm.'\n# Configure a useful initial viewport.\nfor screen in bpy.data.screens:\n for area in screen.areas:\n  if area.type=='VIEW_3D':\n   area.spaces.active.region_3d.view_distance=39;area.spaces.active.region_3d.view_location=(0,0,2);area.spaces.active.region_3d.view_rotation=cam.rotation_euler.to_quaternion();area.spaces.active.clip_end=1000\nbpy.ops.object.select_all(action='DESELECT')\n# GLB uses meters, exports only jewelry; curves converted in temporary duplicate objects.\nexports=[]\nfor c in (metal,gems,settings):\n for o in list(c.objects):\n  dup=o.copy();dup.data=o.data.copy();base.objects.link(dup);exports.append(dup);dup.select_set(True)\nbpy.context.view_layer.objects.active=exports[0];bpy.ops.object.convert(target='MESH')\nfor o in bpy.context.selected_objects:\n o.location *= .001; o.scale *= .001\nbpy.ops.export_scene.gltf(filepath=os.path.join(OUT,'oval_halo_prototype.glb'),use_selection=True,export_format='GLB')\nbpy.ops.object.delete(use_global=False)\nbpy.ops.wm.save_as_mainfile(filepath=os.path.join(OUT,'oval_halo_prototype.blend'))\ns.render.filepath=os.path.join(OUT,'oval_halo_preview.png');bpy.ops.render.render(write_still=True)\nprint('VALIDATION',json.dumps({'diamonds':len(gems.objects),'center_prongs':4,'objects':len(metal.objects)+len(gems.objects)+len(settings.objects),'blend_saved':True}))\n"</script>
 <script>
 /* ============================================================
    RING DRAWING
@@ -982,6 +993,7 @@ function finish(r) {
   show('result');
   $('topMeta').textContent = 'Your result';
   renderRing($('resultCanvas'), r);
+  showStudio(r);
   $('resTitle').textContent = ringTitle(r);
   $('resMetal').textContent = 'in ' + LABEL.metal[r.metal].replace('Platinum', 'platinum');
   $('resSpec').innerHTML = specRows(r).map(([a, b]) => `<dt>${a}</dt><dd>${b}</dd>`).join('');
@@ -1061,6 +1073,70 @@ document.querySelectorAll('.seg[data-t]').forEach(b => b.addEventListener('click
 (() => { let n = 30; try { const v = +localStorage.getItem('ringduel.rounds'); if ([20, 30, 40].includes(v)) n = v; } catch (e) {} setRounds(n); })();
 playBtns.forEach(b => b.addEventListener('click', () => choosePlay(+b.dataset.i)));
 faceBtns.forEach(b => b.addEventListener('click', () => chooseFace(+b.dataset.i)));
+
+// Self-contained handoff: works from file://, offline, and without WebGL.
+function blenderBriefText(r, date = new Date()) {
+  const design = {
+    schemaVersion: 1,
+    source: 'Ring Duel final selected design',
+    exportedAt: date.toISOString(),
+    traits: Object.fromEntries(KEYS.map(k => [k, r[k]])),
+    specifications: Object.fromEntries(specRows(r)),
+    detailsVisible: visible(r, 'details'),
+    dimensions: { status: 'Only approximate band width specified; other dimensions are unspecified.' }
+  };
+  const starter = JSON.parse(document.getElementById('blenderStarterSource').textContent);
+  return [
+    '# Ring Duel → Blender handoff',
+    '',
+    '## Prompt for Codex',
+    '',
+    'Create an editable Blender scene for the final selected ring described in this file. Use the design JSON and specifications below as the source of truth. Adapt the included Python example to this design; do not simply run the example unchanged.',
+    '',
+    'Preserve every visible selected trait: center-stone shape, setting, metal, band, accents, and prong or edging details. If detailsVisible is false, follow the human-readable Details specification rather than adding hidden prongs to a bezel or cluster. Interpret "none" as no extra accents, not an instruction to remove stones intrinsic to the chosen setting or band.',
+    '',
+    'Use realistic jewelry proportions, structurally plausible supports and stone seats, individually faceted gems, editable named objects and collections, refined metal materials, and studio lighting. Reuse the example’s geometry helpers, materials, scene setup, and export techniques where appropriate; replace its hardcoded oval/halo/yellow-gold/pavé geometry wherever it conflicts with this winner.',
+    '',
+    'Ring size, center-stone dimensions, carat weight, and precise manufacturing measurements are not captured by the game. Choose reasonable illustrative dimensions, explicitly document them as assumptions, and do not claim they were selected by the player. This is a visual concept, not manufacturing CAD.',
+    '',
+    'Find the installed Blender executable. Save a new build_ring.py and run it in Blender in a new output folder. The example clears the active scene, so run it in a fresh background Blender process, not in an unsaved working scene. Render, visually inspect, and refine the model. Deliver an editable ring.blend, jewelry-only ring.glb with correct meter scaling, preview.png, the reproducible Python script, and a short dimensions/validation note. Verify the exported model, not just the script syntax. Keep output names generic for the selected design. After saving and validating the deliverables, open the finished ring.blend in the Blender desktop app and leave it open for the user. Frame the complete ring prominently in the 3D viewport at a useful three-quarter angle, with materials visible and studio helpers hidden from the viewport where appropriate. Ensure the ring is actually visible rather than leaving a console, file browser, or empty view on screen. Preserve any unrelated unsaved Blender work by opening the result in a separate instance if needed. If desktop display is unavailable, explain that limitation and provide the saved scene and preview instead. Do not modify the Ring Duel app.',
+    '',
+    '## Winning design',
+    '',
+    descriptionText(r),
+    '',
+    '## Machine-readable design',
+    '',
+    '```json', JSON.stringify(design, null, 2), '```',
+    '',
+    '## Reusable Blender Python example',
+    '',
+    'Reference only: this script produced the earlier oval-halo prototype in Blender 5.1.1. It is NOT a universal ring generator. Its geometry, dimensions, scene labels, validation counts, and output filenames must be adapted to the winning design above. Keep useful rendering and modeling techniques, not conflicting example traits.',
+    '',
+    '```python', starter.trimEnd(), '```', ''
+  ].join('\n');
+}
+$('blenderBriefBtn').addEventListener('click', () => {
+  if (!st.final) return;
+  let url;
+  let link;
+  try {
+    const content = blenderBriefText(st.final);
+    url = URL.createObjectURL(new Blob([content], { type: 'text/markdown;charset=utf-8' }));
+    link = document.createElement('a');
+    link.href = url;
+    link.download = `ring-duel-${st.final.shape}-${st.final.setting}-${st.final.metal}-blender-brief.md`;
+    document.body.appendChild(link);
+    link.click();
+    $('copied').textContent = 'Brief prepared. Attach the downloaded file to a new Codex chat.';
+  } catch (error) {
+    $('copied').textContent = 'Could not export the brief. Please try again.';
+  } finally {
+    if (link) link.remove();
+    if (url) setTimeout(() => URL.revokeObjectURL(url), 60000);
+  }
+});
+
 $('copyBtn').addEventListener('click', () => {
   const text = descriptionText(st.final);
   const done = () => { $('copied').textContent = 'Copied'; };
@@ -1075,13 +1151,238 @@ document.addEventListener('keydown', e => {
   if (st.phase === 'play') { e.preventDefault(); choosePlay(pick); }
   else if (st.phase === 'face') { e.preventDefault(); chooseFace(pick); }
 });
+let studio, studioLoading;
+async function showStudio(r) {
+  $('studioStatus').textContent = 'Preparing your studio render…';
+  try {
+    studioLoading ||= loadStudio();
+    studio = await studioLoading;
+    if (st.final !== r) return;
+    $('studioCanvas').hidden = false;
+    studio.draw(r);
+    $('resultCanvas').hidden = true;
+    $('viewBtn').hidden = false;
+    $('resetViewBtn').hidden = false;
+    $('downloadModelBtn').hidden = false;
+    $('viewBtn').textContent = 'Show illustration';
+    $('studioStatus').textContent = 'Drag to rotate · scroll or pinch to zoom. Illustrative model.';
+  } catch (error) {
+    studioLoading = null;
+    $('studioCanvas').hidden = true;
+    $('resultCanvas').hidden = false;
+    $('viewBtn').hidden = true;
+    $('resetViewBtn').hidden = true;
+    $('downloadModelBtn').hidden = true;
+    $('studioStatus').textContent = 'Showing your illustration. Studio preview needs an internet connection and WebGL.';
+  }
+}
+$('viewBtn').addEventListener('click', () => {
+  const show3D = $('studioCanvas').hidden;
+  $('studioCanvas').hidden = !show3D;
+  $('resultCanvas').hidden = show3D;
+  $('viewBtn').textContent = show3D ? 'Show illustration' : 'Show studio render';
+  if (show3D) studio.resize(); else renderRing($('resultCanvas'), st.final);
+});
+$('resetViewBtn').addEventListener('click', () => studio.reset());
+$('downloadModelBtn').addEventListener('click', async () => {
+  const button = $('downloadModelBtn');
+  const ring = { ...st.final };
+  button.disabled = true;
+  button.textContent = 'Preparing model…';
+  try {
+    const data = await studio.exportModel();
+    const url = URL.createObjectURL(new Blob([data], { type: 'model/gltf-binary' }));
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = 'ring-' + ring.shape + '-' + ring.setting + '-' + ring.metal + '.glb';
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 60000);
+  } catch (error) {
+    $('studioStatus').textContent = 'Model download could not be prepared. Please try again.';
+  } finally {
+    button.disabled = false;
+    button.textContent = 'Download 3D model';
+  }
+});
 let rz = 0;
 window.addEventListener('resize', () => {
   clearTimeout(rz);
-  rz = setTimeout(() => document.querySelectorAll('canvas').forEach(c => { if (c._ring && c.offsetParent) renderRing(c, c._ring); }), 120);
+  rz = setTimeout(() => { document.querySelectorAll('canvas').forEach(c => { if (c._ring && c.offsetParent) renderRing(c, c._ring); }); if (studio && !$('studioCanvas').hidden) studio.resize(); }, 120);
 });
 
 startHero();
+async function loadStudio() {
+// Loaded only for the winner. The original illustration remains the offline fallback.
+const THREE = await import('https://esm.sh/three@0.170.0');
+const { RoomEnvironment } = await import('https://esm.sh/three@0.170.0/examples/jsm/environments/RoomEnvironment.js');
+
+const { OrbitControls } = await import('https://esm.sh/three@0.170.0/examples/jsm/controls/OrbitControls.js');
+
+function createStudio(canvas) {
+  const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: false });
+  renderer.setPixelRatio(Math.min(devicePixelRatio || 1, 2));
+  renderer.setClearColor(0xf4f0e9);
+  renderer.toneMapping = THREE.ACESFilmicToneMapping;
+  renderer.toneMappingExposure = .95;
+  const scene = new THREE.Scene();
+  const pmrem = new THREE.PMREMGenerator(renderer);
+  const room = new RoomEnvironment();
+  const environment = pmrem.fromScene(room, .04);
+  scene.environment = environment.texture;
+  room.dispose(); pmrem.dispose();
+  const camera = new THREE.PerspectiveCamera(32, 1, .1, 100);
+  camera.position.set(8, 9, 12); camera.lookAt(0, .6, 0);
+  const controls = new OrbitControls(camera, canvas);
+  controls.target.set(0, .6, 0);
+  controls.enablePan = false;
+  controls.minDistance = 7;
+  controls.maxDistance = 28;
+  controls.update();
+  controls.saveState();
+  controls.addEventListener('change', () => renderer.render(scene, camera));
+  canvas.addEventListener('keydown', event => {
+    const keys = ['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown', '+', '=', '-'];
+    if (!keys.includes(event.key)) return;
+    event.preventDefault();
+    const offset = camera.position.clone().sub(controls.target);
+    const spherical = new THREE.Spherical().setFromVector3(offset);
+    if (event.key === 'ArrowLeft') spherical.theta -= .12;
+    if (event.key === 'ArrowRight') spherical.theta += .12;
+    if (event.key === 'ArrowUp') spherical.phi -= .12;
+    if (event.key === 'ArrowDown') spherical.phi += .12;
+    if (event.key === '+' || event.key === '=') spherical.radius *= .9;
+    if (event.key === '-') spherical.radius *= 1.1;
+    spherical.radius = THREE.MathUtils.clamp(spherical.radius, controls.minDistance, controls.maxDistance);
+    spherical.makeSafe();
+    camera.position.copy(controls.target).add(new THREE.Vector3().setFromSpherical(spherical));
+    controls.update();
+  });
+  scene.add(new THREE.HemisphereLight(0xffffff, 0xb4a08a, 2));
+  const light = new THREE.DirectionalLight(0xffffff, 3);
+  light.position.set(-3, 8, 6); scene.add(light);
+  let group;
+  const metalColors = { yellow: 0xe8bd68, white: 0xdfe5eb, rose: 0xe4a18b };
+  function mesh(geometry, material, x = 0, y = 0, z = 0) {
+    const item = new THREE.Mesh(geometry, material);
+    item.position.set(x, y, z); group.add(item); return item;
+  }
+  function wire(points, radius, material, closed = false) {
+    const curve = new THREE.CatmullRomCurve3(points.map(p => new THREE.Vector3(...p)), closed);
+    return mesh(new THREE.TubeGeometry(curve, Math.max(32, points.length * 3), radius, 10, closed), material);
+  }
+  function contour(shape, scale = 1) {
+    const points = [];
+    for (let i = 0; i < 64; i++) {
+      const a = i / 64 * Math.PI * 2, c = Math.cos(a), s = Math.sin(a);
+      let x = c, z = s;
+      if (shape === 'oval') { x *= .77; z *= 1.15; }
+      if (shape === 'pear') { x *= .82 * (1 - .45 * s); z *= 1.2; }
+      if (shape === 'marquise') { x = .65 * c * Math.abs(c); z *= 1.3; }
+      if (shape === 'princess' || shape === 'cushion') {
+        const power = shape === 'princess' ? .16 : .45;
+        x = Math.sign(c) * Math.pow(Math.abs(c), power) * .85;
+        z = Math.sign(s) * Math.pow(Math.abs(s), power) * .85;
+      }
+      points.push([x * scale, z * scale]);
+    }
+    if (shape === 'emerald') return [[-.55,-1], [.55,-1], [.75,-.8], [.75,.8], [.55,1], [-.55,1], [-.75,.8], [-.75,-.8]].map(p => p.map(v => v * scale));
+    return points;
+  }
+  function stone(shape, size, x, y, z, diamond) {
+    const edge = contour(shape, size), n = edge.length, vertices = [];
+    const v = (i, scale, h) => [edge[i % n][0] * scale, h, edge[i % n][1] * scale];
+    const tri = (a,b,c) => vertices.push(...a,...b,...c);
+    for (let i = 0; i < n; i++) {
+      const j = (i + 1) % n;
+      tri([0,.32 * size,0], v(i,.55,.32 * size), v(j,.55,.32 * size));
+      tri(v(i,.55,.32 * size), v(i,1,0), v(j,1,0));
+      tri(v(i,.55,.32 * size), v(j,1,0), v(j,.55,.32 * size));
+      tri(v(i,1,0), [0,-.65 * size,0], v(j,1,0));
+    }
+    const geometry = new THREE.BufferGeometry();
+    geometry.setAttribute('position', new THREE.Float32BufferAttribute(vertices, 3));
+    geometry.computeVertexNormals();
+    return mesh(geometry, diamond, x, y, z);
+  }
+  function draw(r) {
+    if (group) {
+      const materials = new Set();
+      group.traverse(o => { if (o.geometry) o.geometry.dispose(); if (o.material) materials.add(o.material); });
+      materials.forEach(m => m.dispose()); scene.remove(group);
+    }
+    group = new THREE.Group(); group.name = 'Winning ring'; group.userData = { traits: { ...r }, note: 'Illustrative geometry; not a manufacturing model.' }; scene.add(group);
+    controls.reset();
+    const metal = new THREE.MeshStandardMaterial({ color: metalColors[r.metal], metalness: 1, roughness: .16 });
+    const diamond = new THREE.MeshPhysicalMaterial({ color: 0xf1f8ff, metalness: .05, roughness: .025, transmission: .65, thickness: 1.2, ior: 2.42, envMapIntensity: 3, clearcoat: 1, side: THREE.DoubleSide });
+    const width = r.band === 'chunky' ? .24 : r.band === 'pave' ? .14 : .105;
+    if (r.band === 'twisted') {
+      for (const sign of [-1,1]) {
+        const points = Array.from({ length: 160 }, (_,i) => {
+          const a = i / 160 * Math.PI * 2, radius = 2 + sign * .08 * Math.cos(a * 8);
+          return [Math.sin(a) * radius, Math.cos(a) * radius, sign * .11 * Math.sin(a * 8)];
+        }); wire(points, .075, metal, true);
+      }
+    } else mesh(new THREE.TorusGeometry(2, width, 20, 160), metal);
+    if (r.band === 'pave') for (let i = -12; i <= 12; i++) {
+      const a = i * .085;
+      const item = stone('round', .095, Math.sin(a) * 2.1, Math.cos(a) * 2.1, 0, diamond);
+      item.rotation.z = -a;
+    }
+    const size = r.setting === 'cluster' ? .52 : r.setting === 'three' ? .75 : .9;
+    const y = 2.48, edge = contour(r.shape, size);
+    // Open basket supports the stone above the shank.
+    wire(edge.map(([x,z]) => [x * .65, y - .43, z * .65]), .055, metal, true);
+    for (const sign of [-1,1]) wire([[sign * 1.25,1.55,0],[sign * .75,2.08,0],[sign * size*.7,y-.12,0]], .07, metal);
+    if (r.setting === 'bezel') wire(edge.map(([x,z]) => [x,y+.025,z]), .07, metal, true);
+    else {
+      const count = r.details === 'p6' ? 6 : 4;
+      for (let i = 0; i < count; i++) {
+        const index = Math.floor((i + .5) * edge.length / count), [x,z] = edge[index];
+        for (const offset of r.details === 'claw' ? [-.045,.045] : [0]) {
+          wire([[x*.7+offset,y-.45,z*.7],[x*1.05+offset,y+.08,z*1.05],[x*.92+offset,y+.16,z*.92]], .035, metal);
+        }
+      }
+    }
+    stone(r.shape, size, 0, y, 0, diamond);
+    if (r.setting === 'three') for (const sign of [-1,1]) {
+      stone('round', .38, sign * (size + .4), y-.2, 0, diamond);
+      wire(contour('round', .4).map(([x,z]) => [x + sign*(size+.4), y-.24,z]), .035, metal, true);
+    }
+    if (r.setting === 'halo' || r.setting === 'cluster' || r.accent === 'hidden') {
+      const hidden = r.accent === 'hidden' && !['halo','cluster'].includes(r.setting);
+      const radius = r.setting === 'cluster' ? .2 : .085;
+      const expansion = hidden ? 1.02 : 1 + radius * 1.4 / size;
+      const count = r.setting === 'cluster' ? 12 : 28;
+      wire(edge.map(([x,z]) => [x*expansion,y-(hidden?.25:.04),z*expansion]), radius*.65, metal, true);
+      for (let i = 0; i < count; i++) {
+        const [x,z] = edge[Math.floor(i * edge.length / count)];
+        stone('round',radius,x*expansion,y-(hidden?.21:0),z*expansion,diamond);
+      }
+    }
+    if (r.accent === 'side') for (const sign of [-1,1]) {
+      const item = stone('emerald', .26, sign*(size+.5), 2.1, 0, diamond); item.rotation.y = Math.PI/2;
+    }
+    if (r.details === 'milgrain') edge.forEach(([x,z]) => mesh(new THREE.SphereGeometry(.025,8,6),metal,x*1.08,y+.05,z*1.08));
+    resize();
+  }
+  function resize() {
+    const width = canvas.clientWidth || 450;
+    renderer.setSize(width, width, false); renderer.render(scene, camera);
+  }
+  async function exportModel() {
+    const model = group.clone(true);
+    const { GLTFExporter } = await import('https://esm.sh/three@0.170.0/examples/jsm/exporters/GLTFExporter.js');
+    // GLB uses meters. Convert the nominal radius of 2 to an illustrative 9 mm.
+    model.scale.setScalar(.0045);
+    return new GLTFExporter().parseAsync(model, { binary: true });
+  }
+  return { draw, resize, reset: () => controls.reset(), exportModel };
+}
+
+return createStudio($('studioCanvas'));
+}
 </script>
 </body>
 </html>

@@ -32,4 +32,16 @@ Each option has a hidden "appeal" weight, estimated with a Bayesian logistic (Br
 
 Before each round, both rings are drawn offscreen and compared pixel by pixel, so two rings that look the same are never shown together.
 
-Rings are drawn with the HTML canvas. The only outside resource is Google Fonts.
+Comparison rings are drawn with the HTML canvas. The winning ring also gets a 3D studio preview with reflective metal, faceted stones, and geometry matching its selected traits. Use the results-screen button to switch between the studio view and the original illustration.
+
+The studio preview loads Three.js 0.170.0 from esm.sh on demand and requires internet access and WebGL. If it cannot load, the illustration and results still work. Google Fonts is also loaded externally. The preview is illustrative, not a manufacturing model.
+
+## Interactive 3D model
+
+On the results screen, drag the ring to rotate it and scroll or pinch to zoom. Keyboard users can focus the model and use arrow keys to rotate, plus/minus to zoom. Reset view restores the original camera angle. Download 3D model saves a GLB file with the ring geometry, materials, and selected traits for use in a 3D viewer or editor. The model uses illustrative proportions and sizing; it is not production CAD or a print-ready jewelry design.
+
+## Export a Blender brief
+
+After choosing the winner, click **Export Blender brief**. This downloads one self-contained Markdown file containing a ready-to-use Codex prompt, the exact selected traits as JSON and readable specifications, and the Python source of the earlier Blender prototype. Attach the file to a new Codex chat and ask it to follow the brief. No API key, backend, WebGL, or internet connection is needed for the export.
+
+The Python source is an oval-halo example, not a generator for all designs. The prompt instructs Codex to adapt it to the actual winner, document unspecified dimensions, render and inspect the result, and deliver a `.blend`, `.glb`, preview, and reproducible script. Exporting does not start a Codex session or run Blender automatically.
