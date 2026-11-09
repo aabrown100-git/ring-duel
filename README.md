@@ -8,6 +8,7 @@ Play online: [Ring Duel](https://aabrown100-git.github.io/ring-duel/).
 
 On the start screen you can set:
 
+- **Skin tone:** Choose from six tones to preview rings on an illustrated hand. Your choice is saved on this device and does not affect the preference model.
 - **Picks:** 20, 30 or 40 (default 30). More picks give a more accurate result.
 - **Timer:** 5s, 10s, 15s or Off (default 10s).
 
@@ -45,3 +46,5 @@ On the results screen, drag the ring to rotate it and scroll or pinch to zoom. K
 After choosing the winner, click **Export Blender brief**. This downloads one self-contained Markdown file containing a ready-to-use Codex prompt, the exact selected traits as JSON and readable specifications, and the Python source of the earlier Blender prototype. Attach the file to a new Codex chat and ask it to follow the brief. No API key, backend, WebGL, or internet connection is needed for the export.
 
 The Python source is an oval-halo example, not a generator for all designs. The prompt instructs Codex to adapt it to the actual winner, document unspecified dimensions, render and inspect the result, and deliver a `.blend`, `.glb`, preview, and reproducible script. Exporting does not start a Codex session or run Blender automatically.
+
+Ring comparisons, the final-four bracket, and the winning illustration use the selected hand tone. The separate interactive 3D view shows the ring alone. The Blender brief includes the hand-preview color for an optional on-hand render.

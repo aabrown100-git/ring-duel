@@ -101,6 +101,15 @@ p { margin: 0; }
 #heroCanvas { transition: opacity .35s ease; }
 #heroCanvas.fade { opacity: 0; }
 
+.skin-options { border:0; padding:0; margin:0; }
+.skin-options legend { margin-bottom:8px; }
+.skin-swatches { display:flex; flex-wrap:wrap; gap:9px; }
+.skin-swatch { position:relative; cursor:pointer; }
+.skin-swatch input { position:absolute; opacity:0; width:100%; height:100%; margin:0; }
+.skin-swatch span { display:block; width:38px; height:38px; border-radius:50%; background:var(--skin); border:2px solid var(--surface); box-shadow:0 0 0 1px var(--line); }
+.skin-swatch input:checked + span { box-shadow:0 0 0 3px var(--accent); }
+.skin-swatch input:focus-visible + span { outline:3px solid var(--ink); outline-offset:5px; }
+.skin-caption { margin-top:8px; font-size:13px; color:var(--muted); }
 /* play */
 .stage { display: flex; flex-direction: column; gap: 14px; }
 .hud { display: flex; justify-content: space-between; align-items: flex-end; gap: 12px; }
@@ -206,6 +215,11 @@ kbd { font: 600 12px var(--body); border: 1px solid var(--line); border-bottom-w
         <button type="button" class="seg" data-t="15" aria-pressed="false">15s</button>
         <button type="button" class="seg" data-t="0" aria-pressed="false">Off</button>
       </div>
+      <fieldset class="skin-options">
+        <legend class="opt-label">Your skin tone</legend>
+        <div class="skin-swatches" id="skinSwatches"></div>
+        <p class="skin-caption" id="skinCaption" aria-live="polite"></p>
+      </fieldset>
       <div><button class="btn" id="startBtn" type="button">Start round 1</button></div>
     </div>
     <div class="hero">
@@ -282,6 +296,16 @@ kbd { font: 600 12px var(--body); border: 1px solid var(--line); border-bottom-w
 /* ============================================================
    RING DRAWING
    ============================================================ */
+const SKIN_TONES = [
+  { id:'fair', label:'Fair', color:'#f2d6c6', shade:'#cba48f' },
+  { id:'light', label:'Light', color:'#e4b998', shade:'#b78668' },
+  { id:'medium', label:'Medium', color:'#c99169', shade:'#986341' },
+  { id:'tan', label:'Tan', color:'#ad744f', shade:'#79492e' },
+  { id:'deep', label:'Deep', color:'#805037', shade:'#50301f' },
+  { id:'dark', label:'Dark', color:'#503326', shade:'#2a1a14' }
+];
+let skinTone = SKIN_TONES[2];
+try { skinTone = SKIN_TONES.find(t => t.id === localStorage.getItem('ringduel.skinTone')) || skinTone; } catch (e) {}
 const L = 300, Z = 1.45;
 let K = 1; // device pixels per logical unit, for shadow blur
 const TAU = Math.PI * 2;
@@ -604,7 +628,7 @@ function solidHead(ctx, pathPts, cx, cy, R, m) {
   polyPath(ctx, pathPts); ctx.strokeStyle = m.edge; ctx.lineWidth = .6; ctx.stroke();
 }
 
-function drawRing(ctx, r) {
+function drawRing(ctx, r, onHand = false) {
   const m = METALS[r.metal], D = SHAPES[r.shape], cx = 150, cy = 150, mg = r.details === 'milgrain';
   const sc = ({ halo: .86, three: .8, cluster: .55, bezel: .92 })[r.setting] || 1;
   const hw = D.hw * sc, hh = D.hh * sc, petal = 7.6;
@@ -615,7 +639,10 @@ function drawRing(ctx, r) {
   else if (r.setting === 'three') { const rs = 14, sx = hw + 5 + rs; side = { rs, sx }; ext = sx + rs + 3; }
   else ext = hw + 4;
 
+  ctx.save();
+  if (onHand) { ctx.beginPath(); ctx.rect(100, 0, 100, 300); ctx.clip(); }
   drawBand(ctx, r, m, ext);
+  ctx.restore();
   if (r.accent === 'side') drawSideAccents(ctx, ext, m);
 
   const pts = move(outline(r.shape, hw, hh), cx, cy);
@@ -678,25 +705,61 @@ function looksDifferent(a, b) {
     return n / (PROBE * PROBE) > .008;
   } catch (e) { return true; }
 }
+// Dorsal hand illustration. All comparisons use identical pose, scale, and tone.
+function drawHand(ctx) {
+  const skin = skinTone;
+  const fill = (left, right) => {
+    const g = ctx.createLinearGradient(left, 0, right, 0);
+    g.addColorStop(0, skin.shade); g.addColorStop(.3, skin.color);
+    g.addColorStop(.7, skin.color); g.addColorStop(1, skin.shade); return g;
+  };
+  ctx.save();
+  ctx.shadowColor = 'rgba(0,0,0,.25)'; ctx.shadowBlur = 12; ctx.shadowOffsetY = 5;
+  // Fingers overlap the palm to avoid gaps at their roots.
+  const fingers = [[61,91,31,112],[103,46,34,153],[145,30,35,168],[187,52,34,148]];
+  // One continuous silhouette keeps the fingers and palm naturally joined.
+  ctx.beginPath(); ctx.moveTo(45.5,185); ctx.lineTo(45.5,106.5);
+  ctx.bezierCurveTo(45.5,86,76.5,86,76.5,106.5); ctx.lineTo(76.5,170);
+  ctx.quadraticCurveTo(81,181,86,168); ctx.lineTo(86,63);
+  ctx.bezierCurveTo(86,40,120,40,120,63); ctx.lineTo(120,165);
+  ctx.quadraticCurveTo(124,176,127.5,164); ctx.lineTo(127.5,47.5);
+  ctx.bezierCurveTo(127.5,24,162.5,24,162.5,47.5); ctx.lineTo(162.5,164);
+  ctx.quadraticCurveTo(166,176,170,165); ctx.lineTo(170,69);
+  ctx.bezierCurveTo(170,46,204,46,204,69); ctx.lineTo(204,177);
+  ctx.bezierCurveTo(219,149,232,136,242,149);
+  ctx.bezierCurveTo(250,158,239,181,226,194);
+  ctx.bezierCurveTo(209,215,201,248,176,269); ctx.lineTo(174,310);
+  ctx.lineTo(86,310); ctx.lineTo(84,267);
+  ctx.bezierCurveTo(59,242,45,214,45.5,185); ctx.closePath();
+  ctx.fillStyle=fill(43,237); ctx.fill();
+  ctx.shadowBlur=0; ctx.shadowOffsetY=0;
+  // Subtle natural nails and knuckle creases.
+  fingers.forEach(([x,y,w]) => {
+    ctx.beginPath(); ctx.roundRect(x-w*.29,y+7,w*.58,22,[9,9,5,5]);
+    ctx.fillStyle='rgba(255,236,225,.22)';ctx.fill();
+    ctx.strokeStyle='rgba(255,245,237,.18)';ctx.lineWidth=.7;ctx.stroke();
+    ctx.strokeStyle=skin.shade;ctx.globalAlpha=.45;ctx.lineWidth=.8;
+    [y+47,y+52].forEach(yy=>{ctx.beginPath();ctx.moveTo(x-8,yy);ctx.quadraticCurveTo(x,yy+3,x+8,yy);ctx.stroke();});
+    ctx.globalAlpha=1;
+  });
+  ctx.restore();
+}
 function renderRing(canvas, ring) {
   canvas._ring = ring;
-  const dpr = Math.min(window.devicePixelRatio || 1, 2.5);
-  const w = canvas.clientWidth || 300;
-  const px = Math.round(w * dpr);
+  const px = Math.round((canvas.clientWidth || 300) * Math.min(window.devicePixelRatio || 1, 2.5));
   if (canvas.width !== px) { canvas.width = px; canvas.height = px; }
-  const ctx = canvas.getContext('2d'), base = px / L;
-  K = base * Z;
-  ctx.setTransform(1, 0, 0, 1, 0, 0);
-  ctx.clearRect(0, 0, px, px);
-  ctx.setTransform(base, 0, 0, base, 0, 0);
-  ctx.translate(150, 150); ctx.scale(Z, Z); ctx.translate(-150, -150);
-  drawRing(ctx, ring);
-  ctx.setTransform(base, 0, 0, base, 0, 0);
-  ctx.globalCompositeOperation = 'destination-in';
-  const f = ctx.createLinearGradient(0, 0, L, 0);
-  f.addColorStop(0, 'rgba(0,0,0,0)'); f.addColorStop(.2, 'rgba(0,0,0,1)'); f.addColorStop(.8, 'rgba(0,0,0,1)'); f.addColorStop(1, 'rgba(0,0,0,0)');
-  ctx.fillStyle = f; ctx.fillRect(0, 0, L, L);
-  ctx.globalCompositeOperation = 'source-over';
+  const ctx=canvas.getContext('2d'), base=px/L;
+  ctx.setTransform(1,0,0,1,0,0); ctx.clearRect(0,0,px,px);
+  ctx.setTransform(base,0,0,base,0,0);
+  // Crop around the ring finger with a little room around the setting.
+  const ringScale = .34, previewZoom = Z * .85, handZoom = previewZoom / ringScale;
+  ctx.save();
+  ctx.translate(L / 2, L / 2); ctx.scale(handZoom, handZoom); ctx.translate(-103, -153);
+  drawHand(ctx);
+  ctx.save(); ctx.translate(103,153);ctx.scale(ringScale,ringScale);ctx.translate(-150,-150);
+  K=base*previewZoom; drawRing(ctx,ring,true); ctx.restore();
+  ctx.restore();
+  canvas.setAttribute('aria-label', `Ring on a hand · ${skinTone.label.toLowerCase()} skin tone`);
 }
 
 /* ============================================================
@@ -1046,6 +1109,17 @@ function startHero() {
 function stopHero() { clearInterval(heroTimer); }
 
 /* ---------- wiring ---------- */
+$('skinSwatches').innerHTML = SKIN_TONES.map(t => `<label class="skin-swatch" style="--skin:${t.color}" title="${t.label}"><input type="radio" name="skinTone" value="${t.id}" aria-label="${t.label}" ${t.id === skinTone.id ? 'checked' : ''}><span aria-hidden="true"></span></label>`).join('');
+function updateSkinCaption() { $('skinCaption').textContent = `${skinTone.label} · preview on the hand. Saved on this device.`; }
+updateSkinCaption();
+$('skinSwatches').addEventListener('change', event => {
+  const selected = SKIN_TONES.find(t => t.id === event.target.value);
+  if (!selected) return;
+  skinTone = selected;
+  try { localStorage.setItem('ringduel.skinTone', skinTone.id); } catch (e) {}
+  updateSkinCaption();
+  document.querySelectorAll('canvas').forEach(c => { if(c._ring && c.offsetParent) renderRing(c,c._ring); });
+});
 $('startBtn').addEventListener('click', startGame);
 $('againBtn').addEventListener('click', () => { show('intro'); $('topMeta').textContent = 'Engagement ring style finder'; startHero(); });
 function setRounds(n) {
@@ -1083,6 +1157,7 @@ function blenderBriefText(r, date = new Date()) {
     traits: Object.fromEntries(KEYS.map(k => [k, r[k]])),
     specifications: Object.fromEntries(specRows(r)),
     detailsVisible: visible(r, 'details'),
+    handPreview: { skinTone: skinTone.label, color: skinTone.color, purpose: 'Display preference only; not a ring-design trait.' },
     dimensions: { status: 'Only approximate band width specified; other dimensions are unspecified.' }
   };
   const starter = JSON.parse(document.getElementById('blenderStarterSource').textContent);
@@ -1100,6 +1175,8 @@ function blenderBriefText(r, date = new Date()) {
     'Ring size, center-stone dimensions, carat weight, and precise manufacturing measurements are not captured by the game. Choose reasonable illustrative dimensions, explicitly document them as assumptions, and do not claim they were selected by the player. This is a visual concept, not manufacturing CAD.',
     '',
     'Find the installed Blender executable. Save a new build_ring.py and run it in Blender in a new output folder. The example clears the active scene, so run it in a fresh background Blender process, not in an unsaved working scene. Render, visually inspect, and refine the model. Deliver an editable ring.blend, jewelry-only ring.glb with correct meter scaling, preview.png, the reproducible Python script, and a short dimensions/validation note. Verify the exported model, not just the script syntax. Keep output names generic for the selected design. After saving and validating the deliverables, open the finished ring.blend in the Blender desktop app and leave it open for the user. Frame the complete ring prominently in the 3D viewport at a useful three-quarter angle, with materials visible and studio helpers hidden from the viewport where appropriate. Ensure the ring is actually visible rather than leaving a console, file browser, or empty view on screen. Preserve any unrelated unsaved Blender work by opening the result in a separate instance if needed. If desktop display is unavailable, explain that limitation and provide the saved scene and preview instead. Do not modify the Ring Duel app.',
+    '',
+    'For an additional on-hand preview, use the skin tone recorded in handPreview. Keep the jewelry-only GLB separate from any hand geometry.',
     '',
     '## Winning design',
     '',
@@ -1160,12 +1237,13 @@ async function showStudio(r) {
     if (st.final !== r) return;
     $('studioCanvas').hidden = false;
     studio.draw(r);
-    $('resultCanvas').hidden = true;
+    $('studioCanvas').hidden = true;
+    $('resultCanvas').hidden = false;
     $('viewBtn').hidden = false;
     $('resetViewBtn').hidden = false;
     $('downloadModelBtn').hidden = false;
-    $('viewBtn').textContent = 'Show illustration';
-    $('studioStatus').textContent = 'Drag to rotate · scroll or pinch to zoom. Illustrative model.';
+    $('viewBtn').textContent = 'Show ring in 3D';
+    $('studioStatus').textContent = 'Hand preview uses your selected skin tone. Explore the ring separately in 3D.';
   } catch (error) {
     studioLoading = null;
     $('studioCanvas').hidden = true;
@@ -1180,7 +1258,7 @@ $('viewBtn').addEventListener('click', () => {
   const show3D = $('studioCanvas').hidden;
   $('studioCanvas').hidden = !show3D;
   $('resultCanvas').hidden = show3D;
-  $('viewBtn').textContent = show3D ? 'Show illustration' : 'Show studio render';
+  $('viewBtn').textContent = show3D ? 'Show on hand' : 'Show ring in 3D';
   if (show3D) studio.resize(); else renderRing($('resultCanvas'), st.final);
 });
 $('resetViewBtn').addEventListener('click', () => studio.reset());
